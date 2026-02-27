@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Bed4Head.BLL/Bed4Head.BLL.csproj" />
+  <Project Path="Bed4Head.DAL/Bed4Head.DAL.csproj" />
   <Project Path="Bed4Head_Server/Bed4Head_Server.csproj" />
 </Solution>
