@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bed4Head.DAL.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,5 +9,7 @@ namespace Bed4Head.DAL.Repositories
 {
     public interface IUnitOfWork
     {
+        IRepository<User> Users { get; }
+
     }
 }
