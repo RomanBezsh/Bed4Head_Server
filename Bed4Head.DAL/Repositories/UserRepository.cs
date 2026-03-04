@@ -31,8 +31,16 @@ namespace Bed4Head.DAL.Repositories
         }
         public async Task DeleteAsync(Guid id)
         {
-            var user = new User { Id = id };
-            _db.Users.Remove(user);
+            var existing = await _db.Users.FindAsync(id);
+            if (existing != null)
+            {
+                _db.Users.Remove(existing);
+            }
+            else
+            {
+                var stub = new User { Id = id };
+                _db.Entry(stub).State = EntityState.Deleted;
+            }
             await _db.SaveChangesAsync();
         }
     }
