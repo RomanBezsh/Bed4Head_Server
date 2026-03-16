@@ -1,7 +1,8 @@
-﻿using Bed4Head.BLL.Interfaces;
+﻿using Bed4Head.BLL.DTO;
+using Bed4Head.BLL.Interfaces;
+using Bed4Head.BLL.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Bed4Head.BLL.DTO;
 
 namespace Bed4Head_Server.Controllers
 {
@@ -10,9 +11,14 @@ namespace Bed4Head_Server.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        public UserController(IUserService userService)
+        private readonly IAuthService _authService;
+        public UserController(
+            IUserService userService,
+            IAuthService authService
+            )
         {
             _userService = userService;
+            _authService = authService;
         }
 
 
@@ -21,21 +27,6 @@ namespace Bed4Head_Server.Controllers
         {
             var users = await _userService.GetAllUsersAsync();
             return Ok(users);
-        }
-
-        [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserDTO userDto, [FromQuery] string password)
-        {
-            await _userService.RegisterAsync(userDto, password);
-            return Ok();
-        }
-
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromQuery] string email, [FromQuery] string password)
-        {
-            bool isValid = await _userService.VerifyPasswordAsync(email, password);
-            if (!isValid) return Unauthorized();
-            return Ok();
         }
     }
 }
