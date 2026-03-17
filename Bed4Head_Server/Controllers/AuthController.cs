@@ -41,7 +41,7 @@ namespace Bed4Head_Server.Controllers
 
             var token = _authService.GenerateToken(userDto);
 
-            return Ok(new
+            return Ok(new LoginResponseDTO
             {
                 Token = token,
                 User = userDto

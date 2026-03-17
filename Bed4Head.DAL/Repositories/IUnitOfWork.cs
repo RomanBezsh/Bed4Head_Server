@@ -11,5 +11,7 @@ namespace Bed4Head.DAL.Repositories
     {
         IRepository<User> Users { get; }
 
+        Task<int> CompleteAsync();
+
     }
 }

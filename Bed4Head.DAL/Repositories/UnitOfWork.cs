@@ -18,14 +18,16 @@ namespace Bed4Head.DAL.Repositories
             _db = db;
         }
 
-        public IRepository<User> Users
+        public IRepository<User> Users => _userRepository ??= new UserRepository(_db);
+
+        public async Task<int> CompleteAsync()
         {
-            get
-            {
-                if (_userRepository == null)
-                    _userRepository = new UserRepository(_db);
-                return _userRepository;
-            }
+            return await _db.SaveChangesAsync();
+        }
+
+        public void Dispose()
+        {
+            _db.Dispose();
         }
 
     }

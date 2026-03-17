@@ -1,21 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bed4Head.DAL.Entities
+﻿namespace Bed4Head.DAL.Entities
 {
     public class User
     {
         public Guid Id { get; set; }
 
-        public string Name { get; set; }
-
         public string Email { get; set; }
-
         public string PasswordHash { get; set; }
-
         public string PasswordSalt { get; set; }
+
+        public string? DisplayName { get; set; }
+        public string? Phone { get; set; }
+        public DateTime? BirthDate { get; set; }
+
+        public string? Country { get; set; }
+        public string? City { get; set; }
+
+        public bool? IsEmailConfirmed { get; set; }
+        public string? VerificationCode { get; set; }
+        public DateTime? CodeExpiryTime { get; set; } 
+
+        public string? TravelPurpose { get; set; } 
+        public string? AvatarUrl { get; set; } 
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public bool? NewsSeasonalOffers { get; set; }
+        public bool? NewsFavoriteCities { get; set; }
+        public bool? NewsAcrossWorld { get; set; }
+        public bool? NewsAffordableTravel { get; set; }
+
+        public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
+        public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+        public virtual ICollection<Hotel> FavoriteHotels { get; set; } = new List<Hotel>();
+
+        public virtual ICollection<PaymentMethod> PaymentMethods { get; set; } = new List<PaymentMethod>();
     }
 }
