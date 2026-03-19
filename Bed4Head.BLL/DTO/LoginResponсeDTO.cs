@@ -2,7 +2,7 @@
 
 namespace Bed4Head.BLL.DTO
 {
-    public class LoginResponseDTO
+    public class LoginResponceDTO
     {
         public string Token { get; set; }
         public UserDTO User { get; set; }

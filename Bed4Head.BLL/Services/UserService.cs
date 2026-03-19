@@ -33,6 +33,23 @@ namespace Bed4Head.BLL.Services
             return user == null ? null : MapToDto(user);
         }
 
+        public async Task CreateAsync(UserDTO dto, string password)
+        {
+            var user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = dto.Email,
+                DisplayName = dto.DisplayName,
+                CreatedAt = DateTime.UtcNow,
+                PasswordHash = password,
+                PasswordSalt = "temporary_salt_or_empty",
+                IsEmailConfirmed = false
+            };
+
+            await _db.Users.AddAsync(user);
+            await _db.CompleteAsync();
+        }
+
         public async Task UpdateAsync(UserDTO dto)
         {
             var user = await _db.Users.GetByIdAsync(dto.Id);
@@ -43,13 +60,8 @@ namespace Bed4Head.BLL.Services
                 user.BirthDate = dto.BirthDate;
                 user.Country = dto.Country;
                 user.City = dto.City;
-                user.AvatarUrl = dto.AvatarUrl;
                 user.TravelPurpose = dto.TravelPurpose;
-
-                user.NewsSeasonalOffers = dto.NewsSeasonalOffers;
-                user.NewsFavoriteCities = dto.NewsFavoriteCities;
-                user.NewsAcrossWorld = dto.NewsAcrossWorld;
-                user.NewsAffordableTravel = dto.NewsAffordableTravel;
+                user.AvatarUrl = dto.AvatarUrl;
 
                 await _db.Users.UpdateAsync(user);
                 await _db.CompleteAsync();

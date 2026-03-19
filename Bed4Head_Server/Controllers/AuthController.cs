@@ -13,35 +13,39 @@ namespace Bed4Head_Server.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
-        public AuthController(
-            IUserService userService,
-            IAuthService authService
-            )
+
+        public AuthController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
             _authService = authService;
         }
 
-
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromQuery] UserDTO userDto, [FromQuery] string password)
+        public async Task<IActionResult> Register([FromBody] RegisterRequestDTO dto)
         {
-            await _userService.RegisterAsync(userDto, password);
-            return Ok();
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.RegisterAsync(dto);
+
+            if (result == null)
+                return BadRequest("User already exists or registration failed");
+
+            return Ok(result);
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromQuery] string email, [FromQuery] string password)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO dto) // Заменили Query на Body
         {
-            bool isValid = await _userService.VerifyPasswordAsync(email, password);
+            bool isValid = await _authService.VerifyPasswordAsync(dto.Email, dto.Password);
             if (!isValid) return Unauthorized("Invalid email or password");
 
-            var userDto = await _userService.GetUserByEmailAsync(email);
+            var userDto = await _userService.GetByEmailAsync(dto.Email);
             if (userDto == null) return NotFound();
 
             var token = _authService.GenerateToken(userDto);
 
-            return Ok(new LoginResponseDTO
+            return Ok(new LoginResponceDTO
             {
                 Token = token,
                 User = userDto

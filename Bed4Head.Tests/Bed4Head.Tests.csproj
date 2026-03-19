@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bed4Head.DAL\Bed4Head.DAL.csproj" />
+    <ProjectReference Include="..\Bed4Head.BLL\Bed4Head.BLL.csproj" />
   </ItemGroup>
 
   <ItemGroup>

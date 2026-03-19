@@ -1,32 +1,43 @@
 ﻿using Bed4Head.BLL.DTO;
 using Bed4Head.BLL.Interfaces;
-using Bed4Head.BLL.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bed4Head_Server.Controllers
 {
-    [Route("api/users")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IAuthService _authService;
-        public UserController(
-            IUserService userService,
-            IAuthService authService
-            )
+
+        public UserController(IUserService userService)
         {
             _userService = userService;
-            _authService = authService;
         }
 
-
-        [HttpGet]
-        public async Task<IActionResult> GetAllUsers()
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetProfile(Guid id)
         {
-            var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            var user = await _userService.GetByIdAsync(id);
+            if (user == null) return NotFound("User not found");
+            return Ok(user);
+        }
+
+        [HttpPut("update")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UserDTO dto)
+        {
+            var user = await _userService.GetByIdAsync(dto.Id);
+            if (user == null) return NotFound();
+
+            await _userService.UpdateAsync(dto);
+            return Ok(new { message = "Profile updated successfully" });
+        }
+
+        [HttpPatch("{id}/preferences")]
+        public async Task<IActionResult> UpdatePreferences(Guid id, [FromQuery] bool seasonal, [FromQuery] bool favorite)
+        {
+            await _userService.UpdateNewsPreferencesAsync(id, seasonal, favorite, true, true);
+            return Ok();
         }
     }
 }
