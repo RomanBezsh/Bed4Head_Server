@@ -1,6 +1,8 @@
 <Solution>
-  <Project Path="Bed4Head.BLL/Bed4Head.BLL.csproj" />
-  <Project Path="Bed4Head.DAL/Bed4Head.DAL.csproj" />
+  <Project Path="Bed4Head.Application/Bed4Head.Application.csproj" />
+  <Project Path="Bed4Head.Common/Bed4Head.Common.csproj" />
+  <Project Path="Bed4Head.Domain/Bed4Head.Domain.csproj" />
+  <Project Path="Bed4Head.Infrastructure/Bed4Head.Infrastructure.csproj" />
   <Project Path="Bed4Head.Tests/Bed4Head.Tests.csproj" Id="47b32104-c21e-4033-923d-a8cf1ce639aa" />
-  <Project Path="Bed4Head_Server/Bed4Head_Server.csproj" />
+  <Project Path="Bed4Head.Web/Bed4Head.Web.csproj" />
 </Solution>

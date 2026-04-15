@@ -17,8 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Bed4Head.DAL\Bed4Head.DAL.csproj" />
-    <ProjectReference Include="..\Bed4Head.BLL\Bed4Head.BLL.csproj" />
+    <ProjectReference Include="..\Bed4Head.Application\Bed4Head.Application.csproj" />
+    <ProjectReference Include="..\Bed4Head.Domain\Bed4Head.Domain.csproj" />
+    <ProjectReference Include="..\Bed4Head.Infrastructure\Bed4Head.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>

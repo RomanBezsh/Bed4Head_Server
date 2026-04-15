@@ -1,6 +1,0 @@
-@Bed4Head_Server_HostAddress = http://localhost:5125
-
-GET {{Bed4Head_Server_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
