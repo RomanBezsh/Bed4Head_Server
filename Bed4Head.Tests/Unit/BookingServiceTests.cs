@@ -3,10 +3,6 @@ using Bed4Head.Application.Services;
 using Bed4Head.Infrastructure.Data;
 using Bed4Head.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
 
 public class BookingServiceTests
 {

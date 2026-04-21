@@ -2,18 +2,15 @@ using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
 using Bed4Head.Domain.Entities;
 using Bed4Head.Infrastructure.Repositories;
-
 namespace Bed4Head.Application.Services
 {
     public class ReviewService : IReviewService
     {
         private readonly IUnitOfWork _db;
-
         public ReviewService(IUnitOfWork db)
         {
             _db = db;
         }
-
         public async Task<IEnumerable<ReviewDTO>> GetByHotelIdAsync(Guid hotelId)
         {
             var reviews = await _db.Reviews.GetAllAsync();
@@ -21,65 +18,71 @@ namespace Bed4Head.Application.Services
                           .OrderByDescending(r => r.CreatedAt)
                           .Select(r => MapToDto(r));
         }
-
         public async Task<ReviewDTO?> GetByIdAsync(Guid id)
         {
             var r = await _db.Reviews.GetByIdAsync(id);
             return r == null ? null : MapToDto(r);
         }
-
         public async Task CreateAsync(ReviewDTO dto)
         {
             var review = new Review
             {
                 Id = Guid.NewGuid(),
-                Comment = dto.Comment,
+                Comment = dto.Comment ?? string.Empty,
+                Title = dto.Title,
                 CreatedAt = DateTime.UtcNow,
-
+                StayedAt = dto.StayedAt,
+                TripType = dto.TripType,
+                IsVerifiedStay = dto.IsVerifiedStay,
+                OverallScore = dto.OverallScore,
                 Facilities = dto.Facilities,
                 Staff = dto.Staff,
                 Cleanliness = dto.Cleanliness,
                 Comfort = dto.Comfort,
                 Location = dto.Location,
                 ValueForMoney = dto.ValueForMoney,
-
                 UserId = dto.UserId,
                 HotelId = dto.HotelId
             };
-
             await _db.Reviews.AddAsync(review);
             await _db.CompleteAsync();
         }
-
         public async Task UpdateAsync(ReviewDTO dto)
         {
             var review = await _db.Reviews.GetByIdAsync(dto.Id);
             if (review != null)
             {
-                review.Comment = dto.Comment;
+                review.Comment = dto.Comment ?? string.Empty;
+                review.Title = dto.Title;
+                review.StayedAt = dto.StayedAt;
+                review.TripType = dto.TripType;
+                review.IsVerifiedStay = dto.IsVerifiedStay;
+                review.OverallScore = dto.OverallScore;
                 review.Facilities = dto.Facilities;
                 review.Staff = dto.Staff;
                 review.Cleanliness = dto.Cleanliness;
                 review.Comfort = dto.Comfort;
                 review.Location = dto.Location;
                 review.ValueForMoney = dto.ValueForMoney;
-
                 await _db.Reviews.UpdateAsync(review);
                 await _db.CompleteAsync();
             }
         }
-
         public async Task DeleteAsync(Guid id)
         {
             await _db.Reviews.DeleteAsync(id);
             await _db.CompleteAsync();
         }
-
         private static ReviewDTO MapToDto(Review r) => new ReviewDTO
         {
             Id = r.Id,
             Comment = r.Comment,
+            Title = r.Title,
             CreatedAt = r.CreatedAt,
+            StayedAt = r.StayedAt,
+            TripType = r.TripType,
+            IsVerifiedStay = r.IsVerifiedStay,
+            OverallScore = r.OverallScore,
             Facilities = r.Facilities,
             Staff = r.Staff,
             Cleanliness = r.Cleanliness,
@@ -91,4 +94,3 @@ namespace Bed4Head.Application.Services
         };
     }
 }
-

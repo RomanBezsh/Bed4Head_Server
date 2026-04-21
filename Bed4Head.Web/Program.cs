@@ -8,11 +8,16 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 string? connection = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDataAccessLayer(connection);
+builder.Services.AddDataAccessLayer(connection!);
 builder.Services.AddUnitOfWorkService();
 builder.Services.AddAppServices();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    await app.Services.EnsureDatabaseCreatedAndMigratedAsync(connection!);
+}
 
 if (app.Environment.IsDevelopment())
 {
