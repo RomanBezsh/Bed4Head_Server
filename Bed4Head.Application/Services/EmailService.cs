@@ -2,7 +2,6 @@ using Bed4Head.Application.Interfaces;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
-using System.Net.Mail;
 
 namespace Bed4Head.Application.Services
 {
@@ -17,23 +16,30 @@ namespace Bed4Head.Application.Services
 
         public async Task SendVerificationCodeAsync(string toEmail, string code)
         {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                throw new ArgumentException("Verification code is required.", nameof(code));
+            }
+
             var email = new MimeMessage();
             email.From.Add(new MailboxAddress("Bed4Head", _config["EmailSettings:SenderEmail"]));
             email.To.Add(MailboxAddress.Parse(toEmail));
-            email.Subject = "Код подтверждения Bed4Head";
+            email.Subject = "РљРѕРґ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ Bed4Head";
 
-            var builder = new BodyBuilder();
-            builder.HtmlBody = $@"
+            var builder = new BodyBuilder
+            {
+                HtmlBody = $@"
                 <div style='font-family: Arial; text-align: center; border: 1px solid #eee; padding: 20px;'>
-                    <h2 style='color: #6366f1;'>Добро пожаловать в Bed4Head!</h2>
-                    <p>Твой код подтверждения:</p>
+                    <h2 style='color: #6366f1;'>Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ РІ Bed4Head!</h2>
+                    <p>РўРІРѕР№ РєРѕРґ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёСЏ:</p>
                     <h1 style='letter-spacing: 5px; color: #1e1e1e;'>{code}</h1>
-                    <p style='font-size: 12px; color: #888;'>Если ты не регистрировался у нас, просто удали это письмо.</p>
-                </div>";
+                    <p style='font-size: 12px; color: #888;'>Р•СЃР»Рё С‚С‹ РЅРµ СЂРµРіРёСЃС‚СЂРёСЂРѕРІР°Р»СЃСЏ Сѓ РЅР°СЃ, РїСЂРѕСЃС‚Рѕ СѓРґР°Р»Рё СЌС‚Рѕ РїРёСЃСЊРјРѕ.</p>
+                </div>"
+            };
 
             email.Body = builder.ToMessageBody();
 
-            using var smtp = new MailKit.Net.Smtp.SmtpClient();
+            using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_config["EmailSettings:SmtpServer"], 587, MailKit.Security.SecureSocketOptions.StartTls);
             await smtp.AuthenticateAsync(_config["EmailSettings:SenderEmail"], _config["EmailSettings:Password"]);
             await smtp.SendAsync(email);
@@ -42,8 +48,7 @@ namespace Bed4Head.Application.Services
 
         public async Task SendBookingConfirmationAsync(string toEmail, string hotelName, string roomTitle)
         {
-            // Логика для подтверждения брони без кода
+            await Task.CompletedTask;
         }
     }
 }
-

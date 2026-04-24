@@ -16,4 +16,7 @@
     <ProjectReference Include="..\Bed4Head.Application\Bed4Head.Application.csproj" />
     <ProjectReference Include="..\Bed4Head.Infrastructure\Bed4Head.Infrastructure.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="wwwroot\media\" />
+  </ItemGroup>
 </Project>

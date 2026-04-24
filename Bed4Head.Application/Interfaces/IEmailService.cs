@@ -6,4 +6,3 @@ namespace Bed4Head.Application.Interfaces
         Task SendBookingConfirmationAsync(string toEmail, string hotelName, string roomTitle);
     }
 }
-
