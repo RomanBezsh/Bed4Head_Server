@@ -25,9 +25,6 @@ namespace Bed4Head.Application.DTOs
         public int ReviewsCount { get; set; }
         public TimeOnly? CheckInFrom { get; set; }
         public TimeOnly? CheckOutUntil { get; set; }
-        public bool PetsAllowed { get; set; }
-        public bool HasFreeWifi { get; set; }
-        public bool HasParking { get; set; }
         public bool IsFeatured { get; set; }
         public Guid? HotelChainId { get; set; }
     }

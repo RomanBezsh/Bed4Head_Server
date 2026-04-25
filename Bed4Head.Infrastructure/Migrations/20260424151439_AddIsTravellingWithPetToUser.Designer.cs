@@ -3,6 +3,7 @@ using System;
 using Bed4Head.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bed4Head.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424151439_AddIsTravellingWithPetToUser")]
+    partial class AddIsTravellingWithPetToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,21 +38,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.HasIndex("HotelsId");
 
                     b.ToTable("AmenityHotel");
-                });
-
-            modelBuilder.Entity("AmenityUser", b =>
-                {
-                    b.Property<Guid>("AmenitiesId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UsersId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("AmenitiesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("AmenityUser");
                 });
 
             modelBuilder.Entity("Bed4Head.Domain.Entities.Amenity", b =>
@@ -165,6 +153,12 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
+                    b.Property<bool>("HasFreeWifi")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasParking")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("HotelChainId")
                         .HasColumnType("uuid");
 
@@ -187,6 +181,9 @@ namespace Bed4Head.Infrastructure.Migrations
 
                     b.Property<double>("OverallRating")
                         .HasColumnType("double precision");
+
+                    b.Property<bool>("PetsAllowed")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Phone")
                         .HasColumnType("text");
@@ -511,6 +508,9 @@ namespace Bed4Head.Infrastructure.Migrations
                         .HasColumnType("uuid")
                         .HasDefaultValueSql("gen_random_uuid()");
 
+                    b.Property<Guid?>("AmenityId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("text");
 
@@ -519,6 +519,9 @@ namespace Bed4Head.Infrastructure.Migrations
 
                     b.Property<string>("City")
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("CodeExpiryTime")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Country")
                         .HasColumnType("text");
@@ -534,6 +537,9 @@ namespace Bed4Head.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<bool?>("IsEmailConfirmed")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool?>("IsTravellingWithPet")
                         .HasColumnType("boolean");
 
                     b.Property<bool?>("NewsAcrossWorld")
@@ -559,13 +565,15 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("text");
 
-                    b.Property<string>("PreferredCurrencyCode")
-                        .HasColumnType("text");
-
                     b.Property<string>("TravelPurpose")
                         .HasColumnType("text");
 
+                    b.Property<string>("VerificationCode")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AmenityId");
 
                     b.ToTable("Users");
                 });
@@ -581,21 +589,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.HasOne("Bed4Head.Domain.Entities.Hotel", null)
                         .WithMany()
                         .HasForeignKey("HotelsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("AmenityUser", b =>
-                {
-                    b.HasOne("Bed4Head.Domain.Entities.Amenity", null)
-                        .WithMany()
-                        .HasForeignKey("AmenitiesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Bed4Head.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -715,6 +708,18 @@ namespace Bed4Head.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("Bed4Head.Domain.Entities.User", b =>
+                {
+                    b.HasOne("Bed4Head.Domain.Entities.Amenity", null)
+                        .WithMany("Users")
+                        .HasForeignKey("AmenityId");
+                });
+
+            modelBuilder.Entity("Bed4Head.Domain.Entities.Amenity", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("Bed4Head.Domain.Entities.Hotel", b =>

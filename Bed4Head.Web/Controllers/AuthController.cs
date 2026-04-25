@@ -11,11 +11,13 @@ namespace Bed4Head.Web.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IUserService userService, IAuthService authService)
+        public AuthController(IUserService userService, IAuthService authService, IWebHostEnvironment env)
         {
             _userService = userService;
             _authService = authService;
+            _env = env;
         }
 
         [HttpPost("register")]
@@ -28,6 +30,15 @@ namespace Bed4Head.Web.Controllers
 
             if (result == null)
                 return BadRequest("User already exists or registration failed");
+
+            if (_env.IsDevelopment())
+            {
+                return Ok(new
+                {
+                    Message = "Registration successful. If email sending is disabled, check server logs (confirmation codes are not stored in DB).",
+                    User = result,
+                });
+            }
 
             return Ok(new
             {
@@ -71,7 +82,14 @@ namespace Bed4Head.Web.Controllers
             if (!success)
                 return BadRequest("Failed to confirm email");
 
-            return Ok("Email confirmed successfully. You can now update your profile.");
+            var userDto = await _userService.GetByEmailAsync(dto.Email);
+            var token = _authService.GenerateToken(userDto);
+
+            return Ok(new LoginResponceDTO
+            {
+                Token = token,
+                User = userDto
+            });
         }
 
         [HttpPost("update-profile")]
@@ -91,7 +109,7 @@ namespace Bed4Head.Web.Controllers
             if (!success)
                 return BadRequest("Failed to update profile");
 
-            return Ok("Profile updated successfully");
+            return Ok();
         }
     }
 }

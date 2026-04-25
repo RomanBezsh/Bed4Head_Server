@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Profile 1": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\antik\\source\\repos\\Bed4Head_Server\\Bed4Head.Web\\Program.cs"
+    }
+  }
+}

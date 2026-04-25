@@ -16,6 +16,7 @@ namespace Bed4Head.Application.DTOs
         public bool IsEmailConfirmed { get; set; }
         public string? AvatarUrl { get; set; }
         public string? TravelPurpose { get; set; }
+        public string? PreferredCurrencyCode { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public bool NewsSeasonalOffers { get; set; }

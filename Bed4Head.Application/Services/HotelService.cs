@@ -59,9 +59,6 @@ namespace Bed4Head.Application.Services
                 ReviewsCount = h.ReviewsCount,
                 CheckInFrom = h.CheckInFrom,
                 CheckOutUntil = h.CheckOutUntil,
-                PetsAllowed = h.PetsAllowed,
-                HasFreeWifi = h.HasFreeWifi,
-                HasParking = h.HasParking,
                 IsFeatured = h.IsFeatured,
                 HotelChainId = h.HotelChainId
             };
@@ -93,9 +90,6 @@ namespace Bed4Head.Application.Services
                 ReviewsCount = dto.ReviewsCount,
                 CheckInFrom = dto.CheckInFrom,
                 CheckOutUntil = dto.CheckOutUntil,
-                PetsAllowed = dto.PetsAllowed,
-                HasFreeWifi = dto.HasFreeWifi,
-                HasParking = dto.HasParking,
                 IsFeatured = dto.IsFeatured,
                 HotelChainId = dto.HotelChainId
             };
@@ -129,9 +123,6 @@ namespace Bed4Head.Application.Services
             hotel.ReviewsCount = dto.ReviewsCount;
             hotel.CheckInFrom = dto.CheckInFrom;
             hotel.CheckOutUntil = dto.CheckOutUntil;
-            hotel.PetsAllowed = dto.PetsAllowed;
-            hotel.HasFreeWifi = dto.HasFreeWifi;
-            hotel.HasParking = dto.HasParking;
             hotel.IsFeatured = dto.IsFeatured;
             hotel.HotelChainId = dto.HotelChainId;
             await _db.Hotels.UpdateAsync(hotel);

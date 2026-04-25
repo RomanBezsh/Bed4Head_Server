@@ -4,6 +4,7 @@ using Bed4Head.Domain.Entities;
 using Bed4Head.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,13 +22,15 @@ namespace Bed4Head.Application.Services
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _db;
         private readonly IEmailService _emailService;
+        private readonly ILogger<AuthService> _logger;
         private readonly PasswordHasher<User> _passwordHasher;
 
-        public AuthService(IConfiguration config, IUnitOfWork db, IEmailService emailService)
+        public AuthService(IConfiguration config, IUnitOfWork db, IEmailService emailService, ILogger<AuthService> logger)
         {
             _config = config;
             _db = db;
             _emailService = emailService;
+            _logger = logger;
             _passwordHasher = new PasswordHasher<User>();
         }
 
@@ -37,12 +40,15 @@ namespace Bed4Head.Application.Services
             if (allUsers.Any(u => u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase)))
                 return null;
 
+            var verificationCode = GenerateVerificationCode();
+
             var user = new User
             {
                 Email = dto.Email,
+                DisplayName = GetDisplayNameFromEmail(dto.Email),
                 CreatedAt = DateTime.UtcNow,
                 IsEmailConfirmed = false,
-                PasswordSalt = Guid.NewGuid().ToString()
+                PasswordSalt = Guid.NewGuid().ToString(),
             };
 
             user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
@@ -50,9 +56,16 @@ namespace Bed4Head.Application.Services
             await _db.Users.AddAsync(user);
             await _db.CompleteAsync();
 
-            var verificationCode = GenerateVerificationCode();
             SaveVerificationCode(user.Email, verificationCode);
-            await _emailService.SendVerificationCodeAsync(user.Email, verificationCode);
+            try
+            {
+                await _emailService.SendVerificationCodeAsync(user.Email, verificationCode);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send verification code email for {Email}.", user.Email);
+                // In dev or with SMTP disabled, user can still confirm via code (e.g. debug endpoint or DB).
+            }
 
             return MapToDto(user);
         }
@@ -70,7 +83,16 @@ namespace Bed4Head.Application.Services
 
         public Task<bool> VerifyConfirmationCodeAsync(string email, string code)
         {
-            return Task.FromResult(VerifyConfirmationCode(email, code));
+            return VerifyConfirmationCodeAsyncInternal(email, code);
+        }
+
+        private async Task<bool> VerifyConfirmationCodeAsyncInternal(string email, string code)
+        {
+            if (VerifyConfirmationCode(email, code))
+            {
+                return true;
+            }
+            return false;
         }
 
         public async Task<bool> ConfirmEmailAsync(string email)
@@ -100,12 +122,29 @@ namespace Bed4Head.Application.Services
                 return false;
             }
 
-            user.DisplayName = dto.Name;
-            user.Country = dto.Country;
-            user.City = dto.City;
-            user.TravelPurpose = dto.TravelPurpose;
+            // reload tracked instance for relationship updates (many-to-many)
+            var tracked = await _db.Users.GetByIdAsync(user.Id);
+            if (tracked == null) return false;
 
-            await _db.Users.UpdateAsync(user);
+            tracked.Country = dto.Country;
+            tracked.City = dto.City;
+            tracked.TravelPurpose = dto.TravelPurpose;
+            tracked.PreferredCurrencyCode = dto.PreferredCurrencyCode;
+
+            if (dto.TravelAmenityIds != null)
+            {
+                tracked.Amenities.Clear();
+                foreach (var amenityId in dto.TravelAmenityIds.Distinct())
+                {
+                    var amenity = await _db.Amenities.GetByIdAsync(amenityId);
+                    if (amenity != null)
+                    {
+                        tracked.Amenities.Add(amenity);
+                    }
+                }
+            }
+
+            await _db.Users.UpdateAsync(tracked);
             await _db.CompleteAsync();
 
             return true;
@@ -136,6 +175,23 @@ namespace Bed4Head.Application.Services
         private static string GenerateVerificationCode()
         {
             return RandomNumberGenerator.GetInt32(100000, 1_000_000).ToString();
+        }
+
+        private static string GetDisplayNameFromEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return "User";
+            }
+
+            var at = email.IndexOf('@');
+            if (at <= 0)
+            {
+                return email.Trim();
+            }
+
+            var local = email[..at].Trim();
+            return string.IsNullOrEmpty(local) ? "User" : local;
         }
 
         private static void SaveVerificationCode(string email, string code)
@@ -188,7 +244,8 @@ namespace Bed4Head.Application.Services
             City = u.City,
             BirthDate = u.BirthDate,
             CreatedAt = u.CreatedAt,
-            IsEmailConfirmed = u.IsEmailConfirmed ?? false
+            IsEmailConfirmed = u.IsEmailConfirmed ?? false,
+            PreferredCurrencyCode = u.PreferredCurrencyCode,
         };
     }
 }

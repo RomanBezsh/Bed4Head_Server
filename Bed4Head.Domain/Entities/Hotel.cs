@@ -27,9 +27,6 @@ namespace Bed4Head.Domain.Entities
         public int ReviewsCount { get; set; }
         public TimeOnly? CheckInFrom { get; set; }
         public TimeOnly? CheckOutUntil { get; set; }
-        public bool PetsAllowed { get; set; }
-        public bool HasFreeWifi { get; set; }
-        public bool HasParking { get; set; }
         public bool IsFeatured { get; set; }
         public Guid? HotelChainId { get; set; }
         public virtual HotelChain? HotelChain { get; set; }

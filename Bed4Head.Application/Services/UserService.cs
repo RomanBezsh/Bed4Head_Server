@@ -83,6 +83,17 @@ namespace Bed4Head.Application.Services
             }
         }
 
+        public async Task UpdateAvatarAsync(Guid userId, string avatarUrl)
+        {
+            var user = await _db.Users.GetByIdAsync(userId);
+            if (user != null)
+            {
+                user.AvatarUrl = avatarUrl;
+                await _db.Users.UpdateAsync(user);
+                await _db.CompleteAsync();
+            }
+        }
+
         public async Task DeleteAsync(Guid id)
         {
             await _db.Users.DeleteAsync(id);
@@ -101,6 +112,7 @@ namespace Bed4Head.Application.Services
             IsEmailConfirmed = u.IsEmailConfirmed ?? false,
             AvatarUrl = u.AvatarUrl,
             TravelPurpose = u.TravelPurpose,
+            PreferredCurrencyCode = u.PreferredCurrencyCode,
             CreatedAt = u.CreatedAt,
             NewsSeasonalOffers = u.NewsSeasonalOffers ?? false,
             NewsFavoriteCities = u.NewsFavoriteCities ?? false,

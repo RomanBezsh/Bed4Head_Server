@@ -16,10 +16,9 @@ namespace Bed4Head.Domain.Entities
         public string? City { get; set; }
 
         public bool? IsEmailConfirmed { get; set; }
-        public string? VerificationCode { get; set; }
-        public DateTime? CodeExpiryTime { get; set; } 
 
         public string? TravelPurpose { get; set; } 
+        public string? PreferredCurrencyCode { get; set; }
         public string? AvatarUrl { get; set; } 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -35,6 +34,8 @@ namespace Bed4Head.Domain.Entities
         public virtual ICollection<Hotel> FavoriteHotels { get; set; } = new List<Hotel>();
 
         public virtual ICollection<PaymentMethod> PaymentMethods { get; set; } = new List<PaymentMethod>();
+
+        public virtual ICollection<Amenity> Amenities { get; set; } = new List<Amenity>();
     }
 }
 
