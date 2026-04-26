@@ -11,6 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using Bed4Head.Domain.Enums;
 
 namespace Bed4Head.Application.Services
 {
@@ -49,6 +50,7 @@ namespace Bed4Head.Application.Services
                 CreatedAt = DateTime.UtcNow,
                 IsEmailConfirmed = false,
                 PasswordSalt = Guid.NewGuid().ToString(),
+                Role = UserRole.User,
             };
 
             user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
@@ -159,7 +161,8 @@ namespace Bed4Head.Application.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("name", user.DisplayName ?? "User")
+                new Claim("name", user.DisplayName ?? "User"),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var token = new JwtSecurityToken(
@@ -239,6 +242,7 @@ namespace Bed4Head.Application.Services
         {
             Id = u.Id,
             Email = u.Email,
+            Role = u.Role,
             DisplayName = u.DisplayName,
             Country = u.Country,
             City = u.City,

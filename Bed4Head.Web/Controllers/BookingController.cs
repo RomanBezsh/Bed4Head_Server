@@ -1,5 +1,6 @@
 using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bed4Head.Web.Controllers
@@ -43,6 +44,7 @@ namespace Bed4Head.Web.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> GetAll()
         {
             var bookings = await _bookingService.GetAllAsync();

@@ -1,3 +1,5 @@
+using Bed4Head.Domain.Enums;
+
 namespace Bed4Head.Application.DTOs
 {
     public class UserDTO
@@ -5,6 +7,8 @@ namespace Bed4Head.Application.DTOs
         public Guid Id { get; set; }
 
         public required string Email { get; set; }
+
+        public UserRole Role { get; set; } = UserRole.User;
 
         public string? DisplayName { get; set; }
         public string? Phone { get; set; }

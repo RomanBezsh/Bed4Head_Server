@@ -1,3 +1,5 @@
+using Bed4Head.Domain.Enums;
+
 namespace Bed4Head.Domain.Entities
 {
     public class User
@@ -7,6 +9,8 @@ namespace Bed4Head.Domain.Entities
         public string Email { get; set; }
         public string PasswordHash { get; set; }
         public string PasswordSalt { get; set; }
+
+        public UserRole Role { get; set; } = UserRole.User;
 
         public string? DisplayName { get; set; }
         public string? Phone { get; set; }

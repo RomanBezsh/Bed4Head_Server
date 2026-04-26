@@ -1,6 +1,7 @@
 using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
 using Bed4Head.Domain.Entities;
+using Bed4Head.Domain.Enums;
 using Bed4Head.Infrastructure.Repositories;
 
 namespace Bed4Head.Application.Services
@@ -43,7 +44,8 @@ namespace Bed4Head.Application.Services
                 CreatedAt = DateTime.UtcNow,
                 PasswordHash = password,
                 PasswordSalt = "temporary_salt_or_empty",
-                IsEmailConfirmed = false
+                IsEmailConfirmed = false,
+                Role = UserRole.User
             };
 
             await _db.Users.AddAsync(user);
@@ -104,6 +106,7 @@ namespace Bed4Head.Application.Services
         {
             Id = u.Id,
             Email = u.Email,
+            Role = u.Role,
             DisplayName = u.DisplayName,
             Phone = u.Phone,
             BirthDate = u.BirthDate,

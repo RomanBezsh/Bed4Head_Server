@@ -562,6 +562,9 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<string>("PreferredCurrencyCode")
                         .HasColumnType("text");
 
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
+
                     b.Property<string>("TravelPurpose")
                         .HasColumnType("text");
 
