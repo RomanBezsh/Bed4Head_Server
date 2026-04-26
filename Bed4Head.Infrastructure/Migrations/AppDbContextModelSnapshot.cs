@@ -310,12 +310,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<Guid>("HotelId")
                         .HasColumnType("uuid");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("double precision");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("double precision");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("text");

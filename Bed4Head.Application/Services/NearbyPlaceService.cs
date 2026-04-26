@@ -35,8 +35,6 @@ namespace Bed4Head.Application.Services
                 Name = dto.Name,
                 PlaceType = dto.PlaceType,
                 Address = dto.Address,
-                Latitude = dto.Latitude,
-                Longitude = dto.Longitude,
                 DistanceInMeters = dto.DistanceInMeters,
                 WalkingMinutes = dto.WalkingMinutes,
                 HotelId = dto.HotelId
@@ -52,8 +50,6 @@ namespace Bed4Head.Application.Services
                 place.Name = dto.Name;
                 place.PlaceType = dto.PlaceType;
                 place.Address = dto.Address;
-                place.Latitude = dto.Latitude;
-                place.Longitude = dto.Longitude;
                 place.DistanceInMeters = dto.DistanceInMeters;
                 place.WalkingMinutes = dto.WalkingMinutes;
                 await _db.NearbyPlaces.UpdateAsync(place);
@@ -71,8 +67,6 @@ namespace Bed4Head.Application.Services
             Name = p.Name,
             PlaceType = p.PlaceType,
             Address = p.Address,
-            Latitude = p.Latitude,
-            Longitude = p.Longitude,
             DistanceInMeters = p.DistanceInMeters,
             WalkingMinutes = p.WalkingMinutes,
             HotelId = p.HotelId

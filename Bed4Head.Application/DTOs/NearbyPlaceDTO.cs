@@ -6,8 +6,6 @@ namespace Bed4Head.Application.DTOs
         public required string Name { get; set; }
         public required string PlaceType { get; set; }
         public string? Address { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
         public double DistanceInMeters { get; set; }
         public int? WalkingMinutes { get; set; }
         public Guid HotelId { get; set; }
