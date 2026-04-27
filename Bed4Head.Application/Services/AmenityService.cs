@@ -19,7 +19,6 @@ namespace Bed4Head.Application.Services
                 Id = a.Id,
                 Name = a.Name,
                 Category = a.Category,
-                IconKey = a.IconKey,
                 IsHighlighted = a.IsHighlighted,
                 DisplayOrder = a.DisplayOrder
             });
@@ -33,7 +32,6 @@ namespace Bed4Head.Application.Services
                 Id = a.Id,
                 Name = a.Name,
                 Category = a.Category,
-                IconKey = a.IconKey,
                 IsHighlighted = a.IsHighlighted,
                 DisplayOrder = a.DisplayOrder
             };
@@ -45,7 +43,6 @@ namespace Bed4Head.Application.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Category = dto.Category,
-                IconKey = dto.IconKey,
                 IsHighlighted = dto.IsHighlighted,
                 DisplayOrder = dto.DisplayOrder
             };
@@ -59,7 +56,6 @@ namespace Bed4Head.Application.Services
             {
                 amenity.Name = dto.Name;
                 amenity.Category = dto.Category;
-                amenity.IconKey = dto.IconKey;
                 amenity.IsHighlighted = dto.IsHighlighted;
                 amenity.DisplayOrder = dto.DisplayOrder;
                 await _db.Amenities.UpdateAsync(amenity);

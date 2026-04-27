@@ -65,10 +65,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<int>("DisplayOrder")
                         .HasColumnType("integer");
 
-                    b.Property<string>("IconKey")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<bool>("IsHighlighted")
                         .HasColumnType("boolean");
 
