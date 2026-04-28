@@ -4,6 +4,8 @@ using Bed4Head.Domain.Entities;
 using Bed4Head.Infrastructure.Data;
 using Bed4Head.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.RegularExpressions;
 namespace Bed4Head.Application.Services
 {
     public class HotelService : IHotelService
@@ -368,28 +370,75 @@ namespace Bed4Head.Application.Services
 
         private void ApplyCoordinates(Hotel hotel, string? coordinates)
         {
+            if (!TryParseCoordinates(coordinates, out var latitude, out var longitude))
+            {
+                return;
+            }
+
+            hotel.Latitude = latitude;
+            hotel.Longitude = longitude;
+        }
+
+        private static bool TryParseCoordinates(string? coordinates, out double latitude, out double longitude)
+        {
+            latitude = default;
+            longitude = default;
+
             if (string.IsNullOrWhiteSpace(coordinates))
             {
-                return;
+                return false;
             }
 
-            var parts = coordinates
+            var normalized = coordinates.Trim().Trim('(', ')', '[', ']');
+            var semicolonParts = normalized
+                .Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+            if (semicolonParts.Length == 2 &&
+                TryParseCoordinateValue(semicolonParts[0], out latitude) &&
+                TryParseCoordinateValue(semicolonParts[1], out longitude))
+            {
+                return true;
+            }
+
+            var commaParts = normalized
                 .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts.Length != 2)
+            if (commaParts.Length == 2 &&
+                TryParseCoordinateValue(commaParts[0], out latitude) &&
+                TryParseCoordinateValue(commaParts[1], out longitude))
             {
-                return;
+                return true;
             }
 
-            if (double.TryParse(parts[0], out var latitude))
+            if (commaParts.Length == 4 &&
+                TryParseCoordinateValue($"{commaParts[0]},{commaParts[1]}", out latitude) &&
+                TryParseCoordinateValue($"{commaParts[2]},{commaParts[3]}", out longitude))
             {
-                hotel.Latitude = latitude;
+                return true;
             }
 
-            if (double.TryParse(parts[1], out var longitude))
+            var numberMatches = Regex.Matches(normalized, @"[-+]?\d+(?:[.,]\d+)?");
+            if (numberMatches.Count >= 2 &&
+                TryParseCoordinateValue(numberMatches[0].Value, out latitude) &&
+                TryParseCoordinateValue(numberMatches[1].Value, out longitude))
             {
-                hotel.Longitude = longitude;
+                return true;
             }
+
+            return false;
+        }
+
+        private static bool TryParseCoordinateValue(string rawValue, out double value)
+        {
+            var normalized = rawValue.Trim();
+
+            if (double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            {
+                return true;
+            }
+
+            normalized = normalized.Replace(',', '.');
+            return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
         }
 
         private async Task<List<Amenity>> ResolveAmenitiesAsync(IEnumerable<string> facilityNames)

@@ -11,11 +11,19 @@ namespace Bed4Head.Web.Controllers
     public class HotelController : ControllerBase
     {
         private readonly IHotelService _hotelService;
+        private readonly IHotelFaqService _hotelFaqService;
+        private readonly IHotelPhotoService _hotelPhotoService;
         private readonly IWebHostEnvironment _env;
 
-        public HotelController(IHotelService hotelService, IWebHostEnvironment env)
+        public HotelController(
+            IHotelService hotelService,
+            IHotelFaqService hotelFaqService,
+            IHotelPhotoService hotelPhotoService,
+            IWebHostEnvironment env)
         {
             _hotelService = hotelService;
+            _hotelFaqService = hotelFaqService;
+            _hotelPhotoService = hotelPhotoService;
             _env = env;
         }
 
@@ -36,6 +44,44 @@ namespace Bed4Head.Web.Controllers
             }
 
             return Ok(hotel);
+        }
+
+        [HttpGet("{id:guid}/facilities")]
+        public async Task<IActionResult> GetFacilities(Guid id)
+        {
+            var hotel = await _hotelService.GetFullByIdAsync(id);
+            if (hotel == null)
+            {
+                return NotFound(new { message = "Hotel not found" });
+            }
+
+            return Ok(hotel.Amenities);
+        }
+
+        [HttpGet("{id:guid}/faqs")]
+        public async Task<IActionResult> GetFaqs(Guid id)
+        {
+            var hotel = await _hotelService.GetByIdAsync(id);
+            if (hotel == null)
+            {
+                return NotFound(new { message = "Hotel not found" });
+            }
+
+            var faqs = await _hotelFaqService.GetByHotelIdAsync(id);
+            return Ok(faqs);
+        }
+
+        [HttpGet("{id:guid}/photos")]
+        public async Task<IActionResult> GetPhotos(Guid id)
+        {
+            var hotel = await _hotelService.GetByIdAsync(id);
+            if (hotel == null)
+            {
+                return NotFound(new { message = "Hotel not found" });
+            }
+
+            var photos = await _hotelPhotoService.GetByHotelIdAsync(id);
+            return Ok(photos);
         }
 
         [HttpGet("{id:guid}/full")]
