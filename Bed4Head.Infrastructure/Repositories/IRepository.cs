@@ -13,6 +13,7 @@ namespace Bed4Head.Infrastructure.Repositories
         Task AddAsync(TEntity entity);
         Task UpdateAsync(TEntity entity);
         Task DeleteAsync(Guid id);
+        
     }
 }
 

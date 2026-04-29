@@ -5,11 +5,14 @@ using Bed4Head.Infrastructure.Data;
 using Bed4Head.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 namespace Bed4Head.Application.Services
 {
     public class HotelService : IHotelService
     {
+        private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
         private readonly IUnitOfWork _db;
         private readonly AppDbContext _context;
 
@@ -46,7 +49,6 @@ namespace Bed4Head.Application.Services
                 Id = h.Id,
                 Name = h.Name,
                 Description = h.Description,
-                ShortDescription = h.ShortDescription,
                 Stars = h.Stars,
                 HotelType = h.HotelType,
                 Address = h.Address,
@@ -58,14 +60,12 @@ namespace Bed4Head.Application.Services
                 DistanceFromCenterKm = h.DistanceFromCenterKm,
                 Phone = h.Phone,
                 Email = h.Email,
-                WebsiteUrl = h.WebsiteUrl,
                 BasePricePerNight = h.BasePricePerNight,
                 CurrencyCode = h.CurrencyCode,
+                ImportantInfo = ParseImportantInfo(h.ImportantInfo),
                 OverallRating = h.OverallRating,
                 RatingLabel = h.RatingLabel,
                 ReviewsCount = h.ReviewsCount,
-                CheckInFrom = h.CheckInFrom,
-                CheckOutUntil = h.CheckOutUntil,
                 IsFeatured = h.IsFeatured,
                 HotelChainId = h.HotelChainId
             };
@@ -95,7 +95,6 @@ namespace Bed4Head.Application.Services
                     Id = hotel.Id,
                     Name = hotel.Name,
                     Description = hotel.Description,
-                    ShortDescription = hotel.ShortDescription,
                     Stars = hotel.Stars,
                     HotelType = hotel.HotelType,
                     Address = hotel.Address,
@@ -107,14 +106,12 @@ namespace Bed4Head.Application.Services
                     DistanceFromCenterKm = hotel.DistanceFromCenterKm,
                     Phone = hotel.Phone,
                     Email = hotel.Email,
-                    WebsiteUrl = hotel.WebsiteUrl,
                     BasePricePerNight = hotel.BasePricePerNight,
                     CurrencyCode = hotel.CurrencyCode,
+                    ImportantInfo = ParseImportantInfo(hotel.ImportantInfo),
                     OverallRating = hotel.OverallRating,
                     RatingLabel = hotel.RatingLabel,
                     ReviewsCount = hotel.ReviewsCount,
-                    CheckInFrom = hotel.CheckInFrom,
-                    CheckOutUntil = hotel.CheckOutUntil,
                     IsFeatured = hotel.IsFeatured,
                     HotelChainId = hotel.HotelChainId
                 },
@@ -149,9 +146,7 @@ namespace Bed4Head.Application.Services
                         Id = p.Id,
                         Name = p.Name,
                         PlaceType = p.PlaceType,
-                        Address = p.Address,
                         DistanceInMeters = p.DistanceInMeters,
-                        WalkingMinutes = p.WalkingMinutes,
                         HotelId = p.HotelId
                     })
                     .ToList(),
@@ -193,20 +188,26 @@ namespace Bed4Head.Application.Services
                     {
                         Id = r.Id,
                         Title = r.Title,
-                        Description = r.Description,
                         Price = r.Price,
                         CurrencyCode = r.CurrencyCode,
-                        BedType = r.BedType,
-                        RoomType = r.RoomType,
-                        View = r.View,
-                        AreaInSquareMeters = r.AreaInSquareMeters,
                         MaxGuests = r.MaxGuests,
-                        AvailableUnits = r.AvailableUnits,
                         FreeCancellation = r.FreeCancellation,
-                        BreakfastIncluded = r.BreakfastIncluded,
                         PrivateBathroom = r.PrivateBathroom,
+
+                        // 👇 если есть в Entity
+                        HasWifi = r.HasWifi,
+                        HasPrivatePool = r.HasPrivatePool,
+
                         HotelId = r.HotelId,
-                        PhotoUrls = r.Photos.Select(p => p.Url).ToList()
+
+                        // ✅ превью (первое фото)
+                        PreviewImage = r.Photos
+                            .OrderBy(p => p.Id)
+                            .Select(p => p.Url)
+                            .FirstOrDefault(),
+
+                        // ❗ кровати НЕ подгружаются здесь (у тебя нет Include)
+                        Beds = new List<RoomBedDTO>()
                     })
                     .ToList()
             };
@@ -218,7 +219,6 @@ namespace Bed4Head.Application.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
-                ShortDescription = dto.ShortDescription,
                 Stars = dto.Stars,
                 HotelType = dto.HotelType ?? "Hotel",
                 Address = dto.Address,
@@ -230,14 +230,12 @@ namespace Bed4Head.Application.Services
                 DistanceFromCenterKm = dto.DistanceFromCenterKm,
                 Phone = dto.Phone,
                 Email = dto.Email,
-                WebsiteUrl = dto.WebsiteUrl,
                 BasePricePerNight = dto.BasePricePerNight,
                 CurrencyCode = dto.CurrencyCode,
+                ImportantInfo = SerializeImportantInfo(dto.ImportantInfo),
                 OverallRating = dto.OverallRating,
                 RatingLabel = dto.RatingLabel,
                 ReviewsCount = dto.ReviewsCount,
-                CheckInFrom = dto.CheckInFrom,
-                CheckOutUntil = dto.CheckOutUntil,
                 IsFeatured = dto.IsFeatured,
                 HotelChainId = dto.HotelChainId
             };
@@ -253,17 +251,18 @@ namespace Bed4Head.Application.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name.Trim(),
                 Description = dto.Description?.Trim() ?? string.Empty,
-                ShortDescription = string.IsNullOrWhiteSpace(dto.ShortDescription) ? null : dto.ShortDescription.Trim(),
                 Stars = Math.Clamp(dto.Stars, 1, 5),
                 HotelType = string.IsNullOrWhiteSpace(dto.HotelType) ? "Hotel" : dto.HotelType.Trim(),
                 Address = dto.Address.Trim(),
                 City = dto.City.Trim(),
                 Country = dto.Country.Trim(),
                 PostalCode = string.IsNullOrWhiteSpace(dto.PostalCode) ? null : dto.PostalCode.Trim(),
+                DistanceFromCenterKm = dto.DistanceFromCenterKm,
                 Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim(),
                 Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim(),
                 BasePricePerNight = dto.BasePricePerNight,
                 CurrencyCode = string.IsNullOrWhiteSpace(dto.CurrencyCode) ? "USD" : dto.CurrencyCode.Trim().ToUpperInvariant(),
+                ImportantInfo = NormalizeImportantInfo(dto.ImportantInfo),
                 OverallRating = 0,
                 ReviewsCount = 0,
                 IsFeatured = string.Equals(dto.Status, "Active", StringComparison.OrdinalIgnoreCase)
@@ -288,9 +287,7 @@ namespace Bed4Head.Application.Services
                     Id = Guid.NewGuid(),
                     Name = place.Name,
                     PlaceType = place.PlaceType,
-                    DistanceInMeters = place.DistanceInMeters,
-                    WalkingMinutes = place.WalkingMinutes,
-                    Address = place.Address
+                    DistanceInMeters = place.DistanceInMeters
                 })
                 .ToList();
 
@@ -317,7 +314,6 @@ namespace Bed4Head.Application.Services
             if (hotel == null) return;
             hotel.Name = dto.Name;
             hotel.Description = dto.Description ?? string.Empty;
-            hotel.ShortDescription = dto.ShortDescription;
             hotel.Stars = dto.Stars;
             hotel.HotelType = dto.HotelType ?? hotel.HotelType;
             hotel.Address = dto.Address;
@@ -329,14 +325,12 @@ namespace Bed4Head.Application.Services
             hotel.DistanceFromCenterKm = dto.DistanceFromCenterKm;
             hotel.Phone = dto.Phone;
             hotel.Email = dto.Email;
-            hotel.WebsiteUrl = dto.WebsiteUrl;
             hotel.BasePricePerNight = dto.BasePricePerNight;
             hotel.CurrencyCode = dto.CurrencyCode;
+            hotel.ImportantInfo = SerializeImportantInfo(dto.ImportantInfo);
             hotel.OverallRating = dto.OverallRating;
             hotel.RatingLabel = dto.RatingLabel;
             hotel.ReviewsCount = dto.ReviewsCount;
-            hotel.CheckInFrom = dto.CheckInFrom;
-            hotel.CheckOutUntil = dto.CheckOutUntil;
             hotel.IsFeatured = dto.IsFeatured;
             hotel.HotelChainId = dto.HotelChainId;
             await _db.Hotels.UpdateAsync(hotel);
@@ -543,11 +537,7 @@ namespace Bed4Head.Application.Services
                 {
                     PlaceType = parts[0],
                     Name = parts[1],
-                    DistanceInMeters = ParseDistanceToMeters(parts[2]),
-                    WalkingMinutes = parts.Length > 3 && int.TryParse(parts[3], out var walkingMinutes)
-                        ? walkingMinutes
-                        : null,
-                    Address = parts.Length > 4 ? parts[4] : null
+                    DistanceInMeters = ParseDistanceToMeters(parts[2])
                 };
             }
         }
@@ -589,13 +579,73 @@ namespace Bed4Head.Application.Services
             }
         }
 
+        private static List<ImportantInfoItemDTO> ParseImportantInfo(string? rawImportantInfo)
+        {
+            if (string.IsNullOrWhiteSpace(rawImportantInfo))
+            {
+                return [];
+            }
+
+            var value = rawImportantInfo.Trim();
+            if (value.StartsWith('['))
+            {
+                try
+                {
+                    return (JsonSerializer.Deserialize<List<ImportantInfoItemDTO>>(value, JsonOptions) ?? [])
+                        .Where(item => !string.IsNullOrWhiteSpace(item.Text))
+                        .Select(item => new ImportantInfoItemDTO
+                        {
+                            IconKey = string.IsNullOrWhiteSpace(item.IconKey) ? "Info" : item.IconKey.Trim(),
+                            Text = item.Text.Trim()
+                        })
+                        .ToList();
+                }
+                catch (JsonException)
+                {
+                    return [];
+                }
+            }
+
+            return value
+                .Split(["|||", "\r\n", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Where(text => !string.IsNullOrWhiteSpace(text))
+                .Select(text => new ImportantInfoItemDTO
+                {
+                    IconKey = "Info",
+                    Text = text.Trim()
+                })
+                .ToList();
+        }
+
+        private static string? NormalizeImportantInfo(string? rawImportantInfo)
+        {
+            return SerializeImportantInfo(ParseImportantInfo(rawImportantInfo));
+        }
+
+        private static string? SerializeImportantInfo(IEnumerable<ImportantInfoItemDTO>? importantInfo)
+        {
+            if (importantInfo == null)
+            {
+                return null;
+            }
+
+            var items = importantInfo
+                .Where(item => !string.IsNullOrWhiteSpace(item.Text))
+                .Select(item => new ImportantInfoItemDTO
+                {
+                    IconKey = string.IsNullOrWhiteSpace(item.IconKey) ? "Info" : item.IconKey.Trim(),
+                    Text = item.Text.Trim()
+                })
+                .ToList();
+
+            return items.Count == 0 ? null : JsonSerializer.Serialize(items, JsonOptions);
+        }
+
         private sealed class ParsedNearbyPlace
         {
             public required string PlaceType { get; init; }
             public required string Name { get; init; }
             public required double DistanceInMeters { get; init; }
-            public int? WalkingMinutes { get; init; }
-            public string? Address { get; init; }
         }
 
         private sealed class ParsedFaq

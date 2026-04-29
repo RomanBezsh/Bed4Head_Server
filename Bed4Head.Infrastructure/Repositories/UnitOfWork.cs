@@ -16,6 +16,7 @@ namespace Bed4Head.Infrastructure.Repositories
         private IRepository<HotelFaq>? _hotelFaqRepository;
         private IRepository<HotelPhoto>? _hotelPhotoRepository;
         private IRepository<RoomPhoto>? _roomPhotoRepository;
+        private IRepository<RoomBed>? _roomBedRepository;
         private IRepository<Review>? _reviewRepository;
         private IRepository<PaymentMethod>? _paymentMethodRepository;
         private IRepository<NearbyPlace>? _nearbyPlaceRepository;
@@ -35,6 +36,7 @@ namespace Bed4Head.Infrastructure.Repositories
         public IRepository<HotelPhoto> HotelPhotos => _hotelPhotoRepository ??= new HotelPhotoRepository(_db);
         public IRepository<RoomPhoto> RoomPhotos => _roomPhotoRepository ??= new RoomPhotoRepository(_db);
         public IRepository<Review> Reviews => _reviewRepository ??= new ReviewRepository(_db);
+        public IRepository<RoomBed> RoomBeds => _roomBedRepository ??= new RoomBedRepository(_db);
         public IRepository<PaymentMethod> PaymentMethods => _paymentMethodRepository ??= new PaymentMethodRepository(_db);
         public IRepository<NearbyPlace> NearbyPlaces => _nearbyPlaceRepository ??= new NearbyPlaceRepository(_db);
 

@@ -130,7 +130,6 @@ namespace Bed4Head.Web.Controllers
             {
                 Name = request.Name,
                 Description = request.Description,
-                ShortDescription = request.ShortDescription,
                 Stars = request.Stars,
                 HotelType = request.Type,
                 Address = request.Address,
@@ -142,6 +141,7 @@ namespace Bed4Head.Web.Controllers
                 BasePricePerNight = request.BasePricePerNight,
                 CurrencyCode = request.CurrencyCode,
                 Coordinates = request.Coordinates,
+                DistanceFromCenterKm = request.DistanceFromCenterKm,
                 NearbyPlaces = request.NearbyPlaces,
                 ImportantInfo = request.ImportantInfo,
                 Status = request.Status,

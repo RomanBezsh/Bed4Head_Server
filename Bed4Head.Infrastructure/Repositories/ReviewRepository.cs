@@ -15,12 +15,18 @@ namespace Bed4Head.Infrastructure.Repositories
 
         public async Task<IEnumerable<Review>> GetAllAsync()
         {
-            return await _db.Reviews.AsNoTracking().ToListAsync();
+            return await _db.Reviews
+                .Include(r => r.User)   
+                .AsNoTracking()
+                .ToListAsync();
         }
 
         public async Task<Review?> GetByIdAsync(Guid id)
         {
-            return await _db.Reviews.FindAsync(id);
+            return await _db.Reviews
+                .Include(r => r.User)   
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.Id == id);
         }
 
         public async Task AddAsync(Review entity)

@@ -1,31 +1,22 @@
+﻿using Microsoft.AspNetCore.Http;
+
 namespace Bed4Head.Application.DTOs
 {
-    public class RoomDTO
+    public class CreateRoomRequestDTO
     {
-        public Guid Id { get; set; }
-
-        public string? Title { get; set; }
-
+        public string Title { get; set; } = null!;
         public decimal Price { get; set; }
-
         public string CurrencyCode { get; set; } = "USD";
-
         public int MaxGuests { get; set; }
-
-        public bool FreeCancellation { get; set; }
-
-        public bool PrivateBathroom { get; set; }
-
-        public bool HasWifi { get; set; }
-
-        public bool HasPrivatePool { get; set; }
-
         public Guid HotelId { get; set; }
 
-        // ✅ КРОВАТИ
-        public List<RoomBedDTO> Beds { get; set; } = new();
+        public bool FreeCancellation { get; set; }
+        public bool PrivateBathroom { get; set; }
+        public bool HasWifi { get; set; }
+        public bool HasPrivatePool { get; set; }
 
-        // ✅ ОДНО ФОТО (как у тебя в карточке)
-        public string? PreviewImage { get; set; }
+        public string? Beds { get; set; } // JSON
+
+        public IFormFile? PreviewImage { get; set; } // ✅ ВАЖНО
     }
 }

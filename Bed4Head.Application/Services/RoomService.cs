@@ -2,93 +2,212 @@ using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
 using Bed4Head.Domain.Entities;
 using Bed4Head.Infrastructure.Repositories;
+
 namespace Bed4Head.Application.Services
 {
     public class RoomService : IRoomService
     {
         private readonly IUnitOfWork _db;
+
         public RoomService(IUnitOfWork db)
         {
             _db = db;
         }
+
+        // ✅ Получить комнаты отеля
         public async Task<IEnumerable<RoomDTO>> GetByHotelIdAsync(Guid hotelId)
         {
-            var rooms = await _db.Rooms.GetAllAsync();
-            return rooms.Where(r => r.HotelId == hotelId)
-                        .Select(r => MapToDto(r));
+            var rooms = (await _db.Rooms.GetAllAsync())
+                .Where(r => r.HotelId == hotelId)
+                .ToList();
+
+            var allBeds = await _db.RoomBeds.GetAllAsync();
+            var allPhotos = await _db.RoomPhotos.GetAllAsync();
+
+            return rooms.Select(room =>
+            {
+                var dto = MapToDto(room);
+
+                dto.Beds = allBeds
+                    .Where(b => b.RoomId == room.Id)
+                    .Select(b => new RoomBedDTO
+                    {
+                        Id = b.Id,
+                        Type = b.Type,
+                        Count = b.Count,
+                        RoomId = b.RoomId
+                    })
+                    .ToList();
+
+                dto.PreviewImage = allPhotos
+                    .Where(p => p.RoomId == room.Id)
+                    .Select(p => p.Url)
+                    .FirstOrDefault(); // 👈 одно фото
+
+                return dto;
+            });
         }
+
+        // ✅ Получить одну комнату
         public async Task<RoomDTO?> GetByIdAsync(Guid id)
         {
-            var r = await _db.Rooms.GetByIdAsync(id);
-            return r == null ? null : MapToDto(r);
+            var room = await _db.Rooms.GetByIdAsync(id);
+            if (room == null) return null;
+
+            var dto = MapToDto(room);
+
+            var beds = await _db.RoomBeds.GetAllAsync();
+            dto.Beds = beds
+                .Where(b => b.RoomId == room.Id)
+                .Select(b => new RoomBedDTO
+                {
+                    Id = b.Id,
+                    Type = b.Type,
+                    Count = b.Count,
+                    RoomId = b.RoomId
+                })
+                .ToList();
+
+            var photos = await _db.RoomPhotos.GetAllAsync();
+            dto.PreviewImage = photos
+                .Where(p => p.RoomId == room.Id)
+                .Select(p => p.Url)
+                .FirstOrDefault();
+
+            return dto;
         }
+
+        // ✅ Создать комнату
         public async Task CreateAsync(RoomDTO dto)
         {
             var room = new Room
             {
                 Id = Guid.NewGuid(),
                 Title = dto.Title,
-                Description = dto.Description,
                 Price = dto.Price,
                 CurrencyCode = dto.CurrencyCode,
-                BedType = dto.BedType,
-                RoomType = dto.RoomType,
-                View = dto.View,
-                AreaInSquareMeters = dto.AreaInSquareMeters,
                 MaxGuests = dto.MaxGuests,
-                AvailableUnits = dto.AvailableUnits,
                 FreeCancellation = dto.FreeCancellation,
-                BreakfastIncluded = dto.BreakfastIncluded,
                 PrivateBathroom = dto.PrivateBathroom,
+                HasWifi = dto.HasWifi,
+                HasPrivatePool = dto.HasPrivatePool,
                 HotelId = dto.HotelId
             };
+
             await _db.Rooms.AddAsync(room);
+
+            // ✅ КРОВАТИ
+            if (dto.Beds != null && dto.Beds.Any())
+            {
+                foreach (var bed in dto.Beds)
+                {
+                    await _db.RoomBeds.AddAsync(new RoomBed
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = bed.Type,
+                        Count = bed.Count,
+                        RoomId = room.Id
+                    });
+                }
+            }
+
+            // ✅ ПРЕВЬЮ ФОТО (одно)
+            if (!string.IsNullOrWhiteSpace(dto.PreviewImage))
+            {
+                await _db.RoomPhotos.AddAsync(new RoomPhoto
+                {
+                    Id = Guid.NewGuid(),
+                    Url = dto.PreviewImage,
+                    RoomId = room.Id
+                });
+            }
+
             await _db.CompleteAsync();
         }
+
+        // ✅ Обновить комнату
         public async Task UpdateAsync(RoomDTO dto)
         {
             var room = await _db.Rooms.GetByIdAsync(dto.Id);
-            if (room != null)
+            if (room == null) return;
+
+            room.Title = dto.Title;
+            room.Price = dto.Price;
+            room.CurrencyCode = dto.CurrencyCode;
+            room.MaxGuests = dto.MaxGuests;
+            room.FreeCancellation = dto.FreeCancellation;
+            room.PrivateBathroom = dto.PrivateBathroom;
+            room.HasWifi = dto.HasWifi;
+            room.HasPrivatePool = dto.HasPrivatePool;
+
+            await _db.Rooms.UpdateAsync(room);
+
+            // ❗ УДАЛЯЕМ СТАРЫЕ КРОВАТИ
+            var existingBeds = await _db.RoomBeds.GetAllAsync();
+            foreach (var bed in existingBeds.Where(b => b.RoomId == room.Id))
             {
-                room.Title = dto.Title;
-                room.Description = dto.Description;
-                room.Price = dto.Price;
-                room.CurrencyCode = dto.CurrencyCode;
-                room.BedType = dto.BedType;
-                room.RoomType = dto.RoomType;
-                room.View = dto.View;
-                room.AreaInSquareMeters = dto.AreaInSquareMeters;
-                room.MaxGuests = dto.MaxGuests;
-                room.AvailableUnits = dto.AvailableUnits;
-                room.FreeCancellation = dto.FreeCancellation;
-                room.BreakfastIncluded = dto.BreakfastIncluded;
-                room.PrivateBathroom = dto.PrivateBathroom;
-                await _db.Rooms.UpdateAsync(room);
-                await _db.CompleteAsync();
+                await _db.RoomBeds.DeleteAsync(bed.Id);
             }
+
+            // ❗ ДОБАВЛЯЕМ НОВЫЕ
+            if (dto.Beds != null)
+            {
+                foreach (var bed in dto.Beds)
+                {
+                    await _db.RoomBeds.AddAsync(new RoomBed
+                    {
+                        Id = Guid.NewGuid(),
+                        Type = bed.Type,
+                        Count = bed.Count,
+                        RoomId = room.Id
+                    });
+                }
+            }
+
+            // ❗ УДАЛЯЕМ СТАРОЕ ФОТО
+            var existingPhotos = await _db.RoomPhotos.GetAllAsync();
+            foreach (var photo in existingPhotos.Where(p => p.RoomId == room.Id))
+            {
+                await _db.RoomPhotos.DeleteAsync(photo.Id);
+            }
+
+            // ❗ ДОБАВЛЯЕМ НОВОЕ
+            if (!string.IsNullOrWhiteSpace(dto.PreviewImage))
+            {
+                await _db.RoomPhotos.AddAsync(new RoomPhoto
+                {
+                    Id = Guid.NewGuid(),
+                    Url = dto.PreviewImage,
+                    RoomId = room.Id
+                });
+            }
+
+            await _db.CompleteAsync();
         }
+
+        // ✅ Удалить
         public async Task DeleteAsync(Guid id)
         {
             await _db.Rooms.DeleteAsync(id);
             await _db.CompleteAsync();
         }
+
+        // 🔧 Маппер
         private static RoomDTO MapToDto(Room r) => new RoomDTO
         {
             Id = r.Id,
             Title = r.Title,
-            Description = r.Description,
             Price = r.Price,
             CurrencyCode = r.CurrencyCode,
-            BedType = r.BedType,
-            RoomType = r.RoomType,
-            View = r.View,
-            AreaInSquareMeters = r.AreaInSquareMeters,
             MaxGuests = r.MaxGuests,
-            AvailableUnits = r.AvailableUnits,
             FreeCancellation = r.FreeCancellation,
-            BreakfastIncluded = r.BreakfastIncluded,
             PrivateBathroom = r.PrivateBathroom,
+            HasWifi = r.HasWifi,
+            HasPrivatePool = r.HasPrivatePool,
             HotelId = r.HotelId,
+
+            Beds = new List<RoomBedDTO>(),
+            PreviewImage = null
         };
     }
 }

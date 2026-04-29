@@ -19,23 +19,24 @@ namespace Bed4Head.Infrastructure.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<NearbyPlace> NearbyPlaces { get; set; }
         public DbSet<Room> Rooms { get; set; }
+        public DbSet<RoomBed> RoomBeds { get; set; }
         public DbSet<RoomPhoto> RoomPhotos { get; set; }
         public DbSet<Booking> Bookings { get; set; }
         public DbSet<Amenity> Amenities { get; set; }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder) // Проверь это имя
+        protected override void OnModelCreating(ModelBuilder modelBuilder) // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ
         {
             base.OnModelCreating(modelBuilder);
 
-            // Настройка UUID для PostgreSQL
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ UUID пїЅпїЅпїЅ PostgreSQL
             modelBuilder.Entity<User>(entity =>
             {
                 entity.Property(e => e.Id)
                       .HasDefaultValueSql("gen_random_uuid()");
             });
 
-            // Если ты переименовал HotelRatings в Reviews, 
-            // проверь, чтобы в миграциях не осталось старых ссылок.
+            // пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ HotelRatings пїЅ Reviews, 
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
         }
     }
 }

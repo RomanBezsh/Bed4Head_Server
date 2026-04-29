@@ -5,7 +5,6 @@ namespace Bed4Head.Application.DTOs
         public Guid Id { get; set; }
         public required string Name { get; set; }
         public string? Description { get; set; }
-        public string? ShortDescription { get; set; }
         public int Stars { get; set; }
         public string? HotelType { get; set; }
         public required string Address { get; set; }
@@ -17,14 +16,12 @@ namespace Bed4Head.Application.DTOs
         public double? DistanceFromCenterKm { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
-        public string? WebsiteUrl { get; set; }
         public decimal BasePricePerNight { get; set; }
         public string CurrencyCode { get; set; } = "USD";
+        public List<ImportantInfoItemDTO> ImportantInfo { get; set; } = [];
         public double OverallRating { get; set; }
         public string? RatingLabel { get; set; }
         public int ReviewsCount { get; set; }
-        public TimeOnly? CheckInFrom { get; set; }
-        public TimeOnly? CheckOutUntil { get; set; }
         public bool IsFeatured { get; set; }
         public Guid? HotelChainId { get; set; }
     }

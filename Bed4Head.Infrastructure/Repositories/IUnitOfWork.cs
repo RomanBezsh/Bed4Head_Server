@@ -12,6 +12,7 @@ namespace Bed4Head.Infrastructure.Repositories
         IRepository<HotelChain> HotelChains { get; }
         IRepository<HotelFaq> HotelFaqs { get; }
         IRepository<HotelPhoto> HotelPhotos { get; }
+        IRepository<RoomBed> RoomBeds { get; }
         IRepository<RoomPhoto> RoomPhotos { get; }
         IRepository<Review> Reviews { get; }
         IRepository<PaymentMethod> PaymentMethods { get; }

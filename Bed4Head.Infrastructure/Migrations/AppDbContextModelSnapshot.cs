@@ -133,12 +133,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<decimal>("BasePricePerNight")
                         .HasColumnType("numeric");
 
-                    b.Property<TimeOnly?>("CheckInFrom")
-                        .HasColumnType("time without time zone");
-
-                    b.Property<TimeOnly?>("CheckOutUntil")
-                        .HasColumnType("time without time zone");
-
                     b.Property<string>("City")
                         .IsRequired()
                         .HasColumnType("text");
@@ -166,6 +160,9 @@ namespace Bed4Head.Infrastructure.Migrations
 
                     b.Property<string>("HotelType")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImportantInfo")
                         .HasColumnType("text");
 
                     b.Property<bool>("IsFeatured")
@@ -196,17 +193,11 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<int>("ReviewsCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ShortDescription")
-                        .HasColumnType("text");
-
                     b.Property<int>("Stars")
                         .HasColumnType("integer");
 
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("WebsiteUrl")
-                        .HasColumnType("text");
 
                     b.HasKey("Id");
 
@@ -297,9 +288,6 @@ namespace Bed4Head.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Address")
-                        .HasColumnType("text");
-
                     b.Property<double>("DistanceInMeters")
                         .HasColumnType("double precision");
 
@@ -313,9 +301,6 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<string>("PlaceType")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int?>("WalkingMinutes")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -421,26 +406,17 @@ namespace Bed4Head.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<double?>("AreaInSquareMeters")
-                        .HasColumnType("double precision");
-
-                    b.Property<int>("AvailableUnits")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("BedType")
-                        .HasColumnType("text");
-
-                    b.Property<bool>("BreakfastIncluded")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("CurrencyCode")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
                     b.Property<bool>("FreeCancellation")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasPrivatePool")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("HasWifi")
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("HotelId")
@@ -455,13 +431,7 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<bool>("PrivateBathroom")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("RoomType")
-                        .HasColumnType("text");
-
                     b.Property<string>("Title")
-                        .HasColumnType("text");
-
-                    b.Property<string>("View")
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -561,6 +531,29 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("RoomBed", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Count")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("RoomId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomId");
+
+                    b.ToTable("RoomBeds");
                 });
 
             modelBuilder.Entity("AmenityHotel", b =>
@@ -690,19 +683,28 @@ namespace Bed4Head.Infrastructure.Migrations
 
             modelBuilder.Entity("Bed4Head.Domain.Entities.Room", b =>
                 {
-                    b.HasOne("Bed4Head.Domain.Entities.Hotel", "Hotel")
+                    b.HasOne("Bed4Head.Domain.Entities.Hotel", null)
                         .WithMany("Rooms")
                         .HasForeignKey("HotelId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Hotel");
                 });
 
             modelBuilder.Entity("Bed4Head.Domain.Entities.RoomPhoto", b =>
                 {
                     b.HasOne("Bed4Head.Domain.Entities.Room", "Room")
                         .WithMany("Photos")
+                        .HasForeignKey("RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("RoomBed", b =>
+                {
+                    b.HasOne("Bed4Head.Domain.Entities.Room", "Room")
+                        .WithMany("Beds")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -730,6 +732,8 @@ namespace Bed4Head.Infrastructure.Migrations
 
             modelBuilder.Entity("Bed4Head.Domain.Entities.Room", b =>
                 {
+                    b.Navigation("Beds");
+
                     b.Navigation("Photos");
                 });
 

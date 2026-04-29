@@ -34,9 +34,7 @@ namespace Bed4Head.Application.Services
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 PlaceType = dto.PlaceType,
-                Address = dto.Address,
                 DistanceInMeters = dto.DistanceInMeters,
-                WalkingMinutes = dto.WalkingMinutes,
                 HotelId = dto.HotelId
             };
             await _db.NearbyPlaces.AddAsync(place);
@@ -49,9 +47,7 @@ namespace Bed4Head.Application.Services
             {
                 place.Name = dto.Name;
                 place.PlaceType = dto.PlaceType;
-                place.Address = dto.Address;
                 place.DistanceInMeters = dto.DistanceInMeters;
-                place.WalkingMinutes = dto.WalkingMinutes;
                 await _db.NearbyPlaces.UpdateAsync(place);
                 await _db.CompleteAsync();
             }
@@ -66,9 +62,7 @@ namespace Bed4Head.Application.Services
             Id = p.Id,
             Name = p.Name,
             PlaceType = p.PlaceType,
-            Address = p.Address,
             DistanceInMeters = p.DistanceInMeters,
-            WalkingMinutes = p.WalkingMinutes,
             HotelId = p.HotelId
         };
     }

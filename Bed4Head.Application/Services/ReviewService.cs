@@ -18,12 +18,68 @@ namespace Bed4Head.Application.Services
                           .OrderByDescending(r => r.CreatedAt)
                           .Select(r => MapToDto(r));
         }
+
+        public async Task<IEnumerable<ReviewDTO>> GetRandomAsync(int count)
+        {
+            var reviews = await _db.Reviews.GetAllAsync();
+            return reviews.Where(r => !string.IsNullOrWhiteSpace(r.Comment))
+                          .OrderBy(_ => Guid.NewGuid())
+                          .Take(NormalizeCount(count))
+                          .Select(r => MapToDto(r));
+        }
+
+        public async Task<IEnumerable<ReviewDTO>> GetRandomByHotelIdAsync(Guid hotelId, int count)
+        {
+            var reviews = await _db.Reviews.GetAllAsync();
+            return reviews.Where(r => r.HotelId == hotelId && !string.IsNullOrWhiteSpace(r.Comment))
+                          .OrderBy(_ => Guid.NewGuid())
+                          .Take(NormalizeCount(count))
+                          .Select(r => MapToDto(r));
+        }
+
+        public async Task<IEnumerable<ReviewDTO>> GetRandomFromRandomHotelAsync(int count)
+        {
+            var reviews = (await _db.Reviews.GetAllAsync())
+                .Where(r => !string.IsNullOrWhiteSpace(r.Comment))
+                .ToList();
+
+            var hotelId = reviews.Select(r => r.HotelId)
+                                 .Distinct()
+                                 .OrderBy(_ => Guid.NewGuid())
+                                 .FirstOrDefault();
+
+            if (hotelId == Guid.Empty)
+            {
+                return Enumerable.Empty<ReviewDTO>();
+            }
+
+            return reviews.Where(r => r.HotelId == hotelId)
+                          .OrderBy(_ => Guid.NewGuid())
+                          .Take(NormalizeCount(count))
+                          .Select(r => MapToDto(r));
+        }
+
+        public async Task<HotelRatingDTO> GetHotelRatingAsync(Guid hotelId)
+        {
+            var reviews = await _db.Reviews.GetAllAsync();
+            var hotelReviews = reviews.Where(r => r.HotelId == hotelId).ToList();
+            var overallRating = CalculateRating(hotelReviews);
+
+            return new HotelRatingDTO
+            {
+                HotelId = hotelId,
+                OverallRating = overallRating,
+                RatingLabel = GetRatingLabel(overallRating),
+                ReviewsCount = hotelReviews.Count
+            };
+        }
+
         public async Task<ReviewDTO?> GetByIdAsync(Guid id)
         {
             var r = await _db.Reviews.GetByIdAsync(id);
             return r == null ? null : MapToDto(r);
         }
-        public async Task CreateAsync(ReviewDTO dto)
+        public async Task CreateAsync(CreateReviewDTO dto, Guid hotelId)
         {
             var review = new Review
             {
@@ -42,10 +98,11 @@ namespace Bed4Head.Application.Services
                 Location = dto.Location,
                 ValueForMoney = dto.ValueForMoney,
                 UserId = dto.UserId,
-                HotelId = dto.HotelId
+                HotelId = hotelId,
             };
             await _db.Reviews.AddAsync(review);
             await _db.CompleteAsync();
+            await RefreshHotelRatingAsync(hotelId);
         }
         public async Task UpdateAsync(ReviewDTO dto)
         {
@@ -66,13 +123,77 @@ namespace Bed4Head.Application.Services
                 review.ValueForMoney = dto.ValueForMoney;
                 await _db.Reviews.UpdateAsync(review);
                 await _db.CompleteAsync();
+                await RefreshHotelRatingAsync(review.HotelId);
             }
         }
         public async Task DeleteAsync(Guid id)
         {
+            var review = await _db.Reviews.GetByIdAsync(id);
+            var hotelId = review?.HotelId;
+
             await _db.Reviews.DeleteAsync(id);
             await _db.CompleteAsync();
+
+            if (hotelId.HasValue)
+            {
+                await RefreshHotelRatingAsync(hotelId.Value);
+            }
         }
+
+        private async Task RefreshHotelRatingAsync(Guid hotelId)
+        {
+            var hotel = await _db.Hotels.GetByIdAsync(hotelId);
+            if (hotel == null)
+            {
+                return;
+            }
+
+            var rating = await GetHotelRatingAsync(hotelId);
+            hotel.OverallRating = rating.OverallRating;
+            hotel.RatingLabel = rating.RatingLabel;
+            hotel.ReviewsCount = rating.ReviewsCount;
+
+            await _db.Hotels.UpdateAsync(hotel);
+            await _db.CompleteAsync();
+        }
+
+        private static double CalculateRating(IReadOnlyCollection<Review> reviews)
+        {
+            if (reviews.Count == 0)
+            {
+                return 0;
+            }
+
+            return Math.Round(reviews.Average(r => r.OverallScore), 1);
+        }
+
+        private static string? GetRatingLabel(double rating)
+        {
+            if (rating <= 0)
+            {
+                return null;
+            }
+
+            if (rating >= 9)
+            {
+                return "Excellent";
+            }
+
+            if (rating >= 8)
+            {
+                return "Very good";
+            }
+
+            if (rating >= 7)
+            {
+                return "Good";
+            }
+
+            return "Review score";
+        }
+
+        private static int NormalizeCount(int count) => Math.Clamp(count, 1, 50);
+
         private static ReviewDTO MapToDto(Review r) => new ReviewDTO
         {
             Id = r.Id,
@@ -91,6 +212,7 @@ namespace Bed4Head.Application.Services
             ValueForMoney = r.ValueForMoney,
             UserId = r.UserId,
             HotelId = r.HotelId,
+            AuthorDisplayName = r.User?.DisplayName
         };
     }
 }
