@@ -12,6 +12,7 @@ namespace Bed4Head.Application.Interfaces
         Task UpdateAsync(HotelDetailsDTO dto);
         Task DeleteAsync(Guid id);
         Task<IEnumerable<HotelSummaryDTO>> GetByChainIdAsync(Guid chainId);
+        Task<IEnumerable<HotelSummaryDTO>> GetNearbyHotelsAsync(Guid hotelId);
     }
 }
 

@@ -19,118 +19,141 @@ namespace Bed4Head.Web.Controllers
             _db = db;
             _env = env;
         }
-
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")]
-        [RequestSizeLimit(50_000_000)]
-        public async Task<IActionResult> Create([FromForm] CreateRoomRequestDTO request)
+[Authorize(Policy = "AdminOnly")]
+[RequestSizeLimit(50_000_000)]
+public async Task<IActionResult> Create([FromForm] CreateRoomRequestDTO request)
+{
+    try
+    {
+        // ✅ Валидация
+        if (string.IsNullOrWhiteSpace(request.Title))
+            return BadRequest(new { message = "Title is required" });
+
+        if (request.Price <= 0)
+            return BadRequest(new { message = "Price must be greater than 0" });
+
+        if (request.MaxGuests <= 0)
+            return BadRequest(new { message = "MaxGuests must be greater than 0" });
+
+        // ✅ Проверка отеля
+        var hotel = await _db.Hotels.GetByIdAsync(request.HotelId);
+        if (hotel == null)
+            return BadRequest(new { message = "Hotel not found" });
+
+        // ✅ Создание комнаты
+        var room = new Room
         {
-            try
+            Id = Guid.NewGuid(),
+            Title = request.Title,
+            Price = request.Price,
+            CurrencyCode = request.CurrencyCode,
+            MaxGuests = request.MaxGuests,
+            HotelId = request.HotelId,
+
+            FreeCancellation = request.FreeCancellation,
+            PrivateBathroom = request.PrivateBathroom,
+            HasWifi = request.HasWifi,
+            HasPrivatePool = request.HasPrivatePool
+        };
+
+        await _db.Rooms.AddAsync(room);
+
+        // ✅ КРОВАТИ
+        if (!string.IsNullOrWhiteSpace(request.Beds))
+        {
+            var beds = JsonSerializer.Deserialize<List<RoomBedDTO>>(
+                request.Beds,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            );
+
+            if (beds != null)
             {
-                // ✅ Валидация
-                if (string.IsNullOrWhiteSpace(request.Title))
-                    return BadRequest(new { message = "Title is required" });
-
-                if (request.Price <= 0)
-                    return BadRequest(new { message = "Price must be greater than 0" });
-
-                if (request.MaxGuests <= 0)
-                    return BadRequest(new { message = "MaxGuests must be greater than 0" });
-
-                // ✅ Проверка отеля
-                var hotelExists = await _db.Hotels.GetByIdAsync(request.HotelId);
-                if (hotelExists == null)
-                    return BadRequest(new { message = "Hotel not found" });
-
-                // ✅ Создание комнаты
-                var room = new Room
+                foreach (var bed in beds)
                 {
-                    Id = Guid.NewGuid(),
-                    Title = request.Title,
-                    Price = request.Price,
-                    CurrencyCode = request.CurrencyCode,
-                    MaxGuests = request.MaxGuests,
-                    HotelId = request.HotelId,
+                    if (string.IsNullOrWhiteSpace(bed.Type) || bed.Count <= 0)
+                        continue;
 
-                    FreeCancellation = request.FreeCancellation,
-                    PrivateBathroom = request.PrivateBathroom,
-                    HasWifi = request.HasWifi,
-                    HasPrivatePool = request.HasPrivatePool
-                };
-
-                await _db.Rooms.AddAsync(room);
-
-                // ✅ КРОВАТИ (исправлено)
-                if (!string.IsNullOrWhiteSpace(request.Beds))
-                {
-                    var beds = JsonSerializer.Deserialize<List<RoomBedDTO>>(
-                        request.Beds,
-                        new JsonSerializerOptions(JsonSerializerDefaults.Web) // 🔥 фикс
-                    );
-
-                    if (beds != null)
-                    {
-                        foreach (var bed in beds)
-                        {
-                            // 🔒 защита от null
-                            if (string.IsNullOrWhiteSpace(bed.Type) || bed.Count <= 0)
-                                continue;
-
-                            await _db.RoomBeds.AddAsync(new RoomBed
-                            {
-                                Id = Guid.NewGuid(),
-                                Type = bed.Type,
-                                Count = bed.Count,
-                                RoomId = room.Id
-                            });
-                        }
-                    }
-                }
-
-                // ✅ ФОТО
-                string? previewUrl = null;
-
-                if (request.PreviewImage != null)
-                {
-                    previewUrl = await SaveRoomPhoto(request.PreviewImage);
-
-                    await _db.RoomPhotos.AddAsync(new RoomPhoto
+                    await _db.RoomBeds.AddAsync(new RoomBed
                     {
                         Id = Guid.NewGuid(),
-                        Url = previewUrl!,
-                        RoomId = room.Id,
-                        IsPreview = true
+                        Type = bed.Type,
+                        Count = bed.Count,
+                        RoomId = room.Id
                     });
                 }
-
-                await _db.CompleteAsync();
-
-                // ✅ Ответ
-                return Ok(new RoomDTO
-                {
-                    Id = room.Id,
-                    Title = room.Title,
-                    Price = room.Price,
-                    CurrencyCode = room.CurrencyCode,
-                    MaxGuests = room.MaxGuests,
-                    FreeCancellation = room.FreeCancellation,
-                    PrivateBathroom = room.PrivateBathroom,
-                    HasWifi = room.HasWifi,
-                    HasPrivatePool = room.HasPrivatePool,
-                    HotelId = room.HotelId,
-                    PreviewImage = previewUrl,
-                    Beds = new List<RoomBedDTO>() // при желании можно вернуть реальные
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    message = "Server error",
-                    detail = ex.Message
-                });
             }
         }
+
+        // ✅ ФОТО
+        string? previewUrl = null;
+
+        if (request.PreviewImage != null)
+        {
+            previewUrl = await SaveRoomPhoto(request.PreviewImage);
+
+            await _db.RoomPhotos.AddAsync(new RoomPhoto
+            {
+                Id = Guid.NewGuid(),
+                Url = previewUrl!,
+                RoomId = room.Id,
+                IsPreview = true
+            });
+        }
+
+        // ✅ 1. Сохраняем комнату
+        await _db.CompleteAsync();
+
+        // ✅ 2. Считаем медиану цен комнат
+        var prices = (await _db.Rooms.GetAllAsync())
+            .Where(r => r.HotelId == request.HotelId)
+            .Select(r => r.Price)
+            .OrderBy(p => p)
+            .ToList();
+
+        if (prices.Count == 0)
+        {
+            hotel.BasePricePerNight = 0;
+        }
+        else
+        {
+            int middle = prices.Count / 2;
+
+            hotel.BasePricePerNight = prices.Count % 2 == 0
+                ? (prices[middle - 1] + prices[middle]) / 2m
+                : prices[middle];
+        }
+
+        // ✅ 3. Сохраняем обновлённый отель
+        await _db.CompleteAsync();
+
+        // ✅ Ответ
+        return Ok(new RoomDTO
+        {
+            Id = room.Id,
+            Title = room.Title,
+            Price = room.Price,
+            CurrencyCode = room.CurrencyCode,
+            MaxGuests = room.MaxGuests,
+            FreeCancellation = room.FreeCancellation,
+            PrivateBathroom = room.PrivateBathroom,
+            HasWifi = room.HasWifi,
+            HasPrivatePool = room.HasPrivatePool,
+            HotelId = room.HotelId,
+            PreviewImage = previewUrl,
+            Beds = new List<RoomBedDTO>()
+        });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new
+        {
+            message = "Server error",
+            detail = ex.Message
+        });
+    }
+}
+
         [HttpGet]
         public async Task<IActionResult> GetByHotelId([FromQuery] Guid hotelId)
         {

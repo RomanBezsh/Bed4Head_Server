@@ -34,6 +34,21 @@ namespace Bed4Head.Infrastructure.Data
                 entity.Property(e => e.Id)
                       .HasDefaultValueSql("gen_random_uuid()");
             });
+            modelBuilder.Entity<NearbyPlace>(entity =>
+            {
+                entity.ToTable("NearbyPlaces");
+
+                entity.HasKey(e => e.Id);
+
+                entity.Property(e => e.HotelId)
+                    .HasColumnName("HotelId"); // 👈 критично
+
+                entity.HasOne(e => e.Hotel)
+                    .WithMany(h => h.NearbyPlaces)
+                    .HasForeignKey(e => e.HotelId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             // ���� �� ������������ HotelRatings � Reviews, 
             // �������, ����� � ��������� �� �������� ������ ������.

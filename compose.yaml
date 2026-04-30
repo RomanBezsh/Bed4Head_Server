@@ -1,0 +1,7 @@
+﻿services:
+  bed4head.web:
+    image: bed4head.web
+    build:
+      context: .
+      dockerfile: Bed4Head.Web/Dockerfile
+

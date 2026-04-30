@@ -3,6 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MailKit" Version="4.15.1" />
@@ -16,5 +17,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Bed4Head.Application\Bed4Head.Application.csproj" />
     <ProjectReference Include="..\Bed4Head.Infrastructure\Bed4Head.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\.dockerignore">
+      <Link>.dockerignore</Link>
+    </Content>
   </ItemGroup>
 </Project>

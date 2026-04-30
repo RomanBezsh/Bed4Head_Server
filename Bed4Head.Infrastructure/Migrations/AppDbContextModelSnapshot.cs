@@ -86,6 +86,9 @@ namespace Bed4Head.Infrastructure.Migrations
                     b.Property<int>("AdultsCount")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("CallMe")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("CheckIn")
                         .HasColumnType("timestamp with time zone");
 
@@ -100,6 +103,9 @@ namespace Bed4Head.Infrastructure.Migrations
 
                     b.Property<Guid>("RoomId")
                         .HasColumnType("uuid");
+
+                    b.Property<bool>("SendEmail")
+                        .HasColumnType("boolean");
 
                     b.Property<string>("Status")
                         .IsRequired()

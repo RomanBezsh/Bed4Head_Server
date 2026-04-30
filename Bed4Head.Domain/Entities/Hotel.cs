@@ -12,12 +12,12 @@ namespace Bed4Head.Domain.Entities
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
-        public string? PostalCode { get; set; }
+        //public string? PostalCode { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
         public double? DistanceFromCenterKm { get; set; }
         public string? Phone { get; set; }
-        public string? Email { get; set; }
+        //public string? Email { get; set; }
         public decimal BasePricePerNight { get; set; }
         public string CurrencyCode { get; set; } = "USD";
         public string? ImportantInfo { get; set; }

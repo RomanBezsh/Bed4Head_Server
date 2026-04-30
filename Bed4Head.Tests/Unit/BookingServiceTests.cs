@@ -34,8 +34,16 @@ public class BookingServiceTests
         await uow.Rooms.AddAsync(room);
         await uow.CompleteAsync();
 
-        var dto = new BookingDTO { UserId = user.Id, RoomId = room.Id, CheckIn = DateTime.UtcNow.Date, CheckOut = DateTime.UtcNow.Date.AddDays(1), TotalPrice = 10 };
-        await service.CreateAsync(dto);
+        var dto = new CreateBookingDTO
+        {
+            RoomId = room.Id,
+            CheckIn = DateTime.UtcNow.Date,
+            CheckOut = DateTime.UtcNow.Date.AddDays(1),
+            AdultsCount = 1,
+            ChildrenCount = 0
+        };
+
+        await service.CreateAsync(dto, user.Id);
 
         var bookings = (await uow.Bookings.GetAllAsync()).ToList();
         Assert.Single(bookings);

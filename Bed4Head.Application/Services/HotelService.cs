@@ -37,13 +37,20 @@ namespace Bed4Head.Application.Services
                 OverallRating = h.OverallRating,
                 RatingLabel = h.RatingLabel,
                 ReviewsCount = h.ReviewsCount,
-                IsFeatured = h.IsFeatured
+                IsFeatured = h.IsFeatured,
+                DistanceFromCenterKm = h.DistanceFromCenterKm
             });
         }
+        
         public async Task<HotelDetailsDTO?> GetByIdAsync(Guid id)
         {
-            var h = await _db.Hotels.GetByIdAsync(id);
+            var h = await _context.Hotels
+                .AsNoTracking()
+                .Include(h => h.NearbyPlaces)
+                .FirstOrDefaultAsync(h => h.Id == id);
+
             if (h == null) return null;
+
             return new HotelDetailsDTO
             {
                 Id = h.Id,
@@ -54,12 +61,10 @@ namespace Bed4Head.Application.Services
                 Address = h.Address,
                 City = h.City,
                 Country = h.Country,
-                PostalCode = h.PostalCode,
                 Latitude = h.Latitude,
                 Longitude = h.Longitude,
                 DistanceFromCenterKm = h.DistanceFromCenterKm,
                 Phone = h.Phone,
-                Email = h.Email,
                 BasePricePerNight = h.BasePricePerNight,
                 CurrencyCode = h.CurrencyCode,
                 ImportantInfo = ParseImportantInfo(h.ImportantInfo),
@@ -67,7 +72,20 @@ namespace Bed4Head.Application.Services
                 RatingLabel = h.RatingLabel,
                 ReviewsCount = h.ReviewsCount,
                 IsFeatured = h.IsFeatured,
-                HotelChainId = h.HotelChainId
+                HotelChainId = h.HotelChainId,
+
+                // ✅ ВОТ ОНО
+                NearbyPlaces = h.NearbyPlaces
+                    .OrderBy(p => p.DistanceInMeters)
+                    .Select(p => new NearbyPlaceDTO
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        PlaceType = p.PlaceType,
+                        DistanceInMeters = p.DistanceInMeters,
+                        HotelId = p.HotelId
+                    })
+                    .ToList()
             };
         }
         public async Task<HotelFullDTO?> GetFullByIdAsync(Guid id)
@@ -100,12 +118,10 @@ namespace Bed4Head.Application.Services
                     Address = hotel.Address,
                     City = hotel.City,
                     Country = hotel.Country,
-                    PostalCode = hotel.PostalCode,
                     Latitude = hotel.Latitude,
                     Longitude = hotel.Longitude,
                     DistanceFromCenterKm = hotel.DistanceFromCenterKm,
                     Phone = hotel.Phone,
-                    Email = hotel.Email,
                     BasePricePerNight = hotel.BasePricePerNight,
                     CurrencyCode = hotel.CurrencyCode,
                     ImportantInfo = ParseImportantInfo(hotel.ImportantInfo),
@@ -224,12 +240,10 @@ namespace Bed4Head.Application.Services
                 Address = dto.Address,
                 City = dto.City,
                 Country = dto.Country,
-                PostalCode = dto.PostalCode,
                 Latitude = dto.Latitude,
                 Longitude = dto.Longitude,
                 DistanceFromCenterKm = dto.DistanceFromCenterKm,
                 Phone = dto.Phone,
-                Email = dto.Email,
                 BasePricePerNight = dto.BasePricePerNight,
                 CurrencyCode = dto.CurrencyCode,
                 ImportantInfo = SerializeImportantInfo(dto.ImportantInfo),
@@ -243,7 +257,62 @@ namespace Bed4Head.Application.Services
             await _db.CompleteAsync();
             return hotel.Id;
         }
+        
+        public async Task<IEnumerable<HotelSummaryDTO>> GetNearbyHotelsAsync(Guid hotelId)
+        {
+            var currentHotel = await _context.Hotels
+                .AsNoTracking()
+                .FirstOrDefaultAsync(h => h.Id == hotelId);
 
+            if (currentHotel == null)
+                return [];
+
+            var lat = currentHotel.Latitude;
+            var lng = currentHotel.Longitude;
+
+            var hotels = await _context.Hotels
+                .AsNoTracking()
+                .Where(h =>
+                        h.Id != hotelId &&
+                        h.City == currentHotel.City // можно убрать, если нужны вообще ближайшие
+                )
+                .Select(h => new
+                {
+                    Hotel = h,
+                    Distance =
+                        Math.Pow(h.Latitude - lat, 2) +
+                        Math.Pow(h.Longitude - lng, 2)
+                })
+                .OrderBy(x => x.Distance)
+                .Take(4)
+                .Select(x => x.Hotel)
+                .Include(h => h.Photos)
+                .ToListAsync();
+
+            return hotels.Select(h => new HotelSummaryDTO
+            {
+                Id = h.Id,
+                Name = h.Name,
+                City = h.City,
+                Country = h.Country,
+                Stars = h.Stars,
+                HotelType = h.HotelType,
+                BasePricePerNight = h.BasePricePerNight,
+                CurrencyCode = h.CurrencyCode,
+                OverallRating = h.OverallRating,
+                RatingLabel = h.RatingLabel,
+                ReviewsCount = h.ReviewsCount,
+                IsFeatured = h.IsFeatured,
+                DistanceFromCenterKm = h.DistanceFromCenterKm,
+
+                Photos = h.Photos
+                    .OrderBy(p => p.DisplayOrder)
+                    .Select(p => p.Url)
+                    .Take(5)
+                    .ToList()
+            });
+        }
+        
         public async Task<Guid> CreateAdminAsync(CreateAdminHotelDTO dto)
         {
             var hotel = new Hotel
@@ -256,10 +325,8 @@ namespace Bed4Head.Application.Services
                 Address = dto.Address.Trim(),
                 City = dto.City.Trim(),
                 Country = dto.Country.Trim(),
-                PostalCode = string.IsNullOrWhiteSpace(dto.PostalCode) ? null : dto.PostalCode.Trim(),
                 DistanceFromCenterKm = dto.DistanceFromCenterKm,
                 Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim(),
-                Email = string.IsNullOrWhiteSpace(dto.Email) ? null : dto.Email.Trim(),
                 BasePricePerNight = dto.BasePricePerNight,
                 CurrencyCode = string.IsNullOrWhiteSpace(dto.CurrencyCode) ? "USD" : dto.CurrencyCode.Trim().ToUpperInvariant(),
                 ImportantInfo = NormalizeImportantInfo(dto.ImportantInfo),
@@ -310,8 +377,13 @@ namespace Bed4Head.Application.Services
         }
         public async Task UpdateAsync(HotelDetailsDTO dto)
         {
-            var hotel = await _db.Hotels.GetByIdAsync(dto.Id);
+            var hotel = await _context.Hotels
+                .Include(h => h.NearbyPlaces)
+                .FirstOrDefaultAsync(h => h.Id == dto.Id);
+
             if (hotel == null) return;
+
+            // --- Обновляем простые поля ---
             hotel.Name = dto.Name;
             hotel.Description = dto.Description ?? string.Empty;
             hotel.Stars = dto.Stars;
@@ -319,12 +391,10 @@ namespace Bed4Head.Application.Services
             hotel.Address = dto.Address;
             hotel.City = dto.City;
             hotel.Country = dto.Country;
-            hotel.PostalCode = dto.PostalCode;
             hotel.Latitude = dto.Latitude;
             hotel.Longitude = dto.Longitude;
             hotel.DistanceFromCenterKm = dto.DistanceFromCenterKm;
             hotel.Phone = dto.Phone;
-            hotel.Email = dto.Email;
             hotel.BasePricePerNight = dto.BasePricePerNight;
             hotel.CurrencyCode = dto.CurrencyCode;
             hotel.ImportantInfo = SerializeImportantInfo(dto.ImportantInfo);
@@ -333,8 +403,25 @@ namespace Bed4Head.Application.Services
             hotel.ReviewsCount = dto.ReviewsCount;
             hotel.IsFeatured = dto.IsFeatured;
             hotel.HotelChainId = dto.HotelChainId;
-            await _db.Hotels.UpdateAsync(hotel);
-            await _db.CompleteAsync();
+
+            // --- ❗ ВАЖНО: обновление NearbyPlaces ---
+    
+            // 1. Удаляем старые
+            _context.NearbyPlaces.RemoveRange(hotel.NearbyPlaces);
+
+            // 2. Добавляем новые
+            hotel.NearbyPlaces = dto.NearbyPlaces
+                .Select(p => new NearbyPlace
+                {
+                    Id = Guid.NewGuid(),
+                    Name = p.Name,
+                    PlaceType = p.PlaceType,
+                    DistanceInMeters = p.DistanceInMeters,
+                    HotelId = hotel.Id
+                })
+                .ToList();
+
+            await _context.SaveChangesAsync();
         }
         public async Task DeleteAsync(Guid id)
         {

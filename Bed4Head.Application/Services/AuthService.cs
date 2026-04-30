@@ -160,6 +160,7 @@ namespace Bed4Head.Application.Services
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
                 new Claim("name", user.DisplayName ?? "User"),
                 new Claim(ClaimTypes.Role, user.Role.ToString())

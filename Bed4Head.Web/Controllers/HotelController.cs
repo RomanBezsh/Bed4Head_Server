@@ -213,5 +213,12 @@ namespace Bed4Head.Web.Controllers
 
             return $"/uploads/hotels/{uniqueFileName}";
         }
+        
+        [HttpGet("{id:guid}/nearby")]
+        public async Task<IActionResult> GetNearby(Guid id)
+        {
+            var hotels = await _hotelService.GetNearbyHotelsAsync(id);
+            return Ok(hotels);
+        }
     }
 }

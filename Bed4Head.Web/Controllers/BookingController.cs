@@ -2,6 +2,8 @@ using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Bed4Head.Web.Controllers
 {
@@ -16,19 +18,30 @@ namespace Bed4Head.Web.Controllers
             _bookingService = bookingService;
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> Create([FromBody] BookingDTO dto)
+        // Создание бронирования
+        [HttpPost]
+        [Authorize]
+        public async Task<IActionResult> Create([FromBody] CreateBookingDTO dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                         ?? User.FindFirstValue("sub");
 
-            await _bookingService.CreateAsync(dto);
+            if (!Guid.TryParse(userId, out var parsedUserId))
+                return Unauthorized();
+
+            await _bookingService.CreateAsync(dto, parsedUserId);
 
             return Ok(new { message = "Booking created successfully" });
         }
+        
+        [HttpGet("test")]
+        public IActionResult Test()
+        {
+            return Ok("WORKS");
+        }
 
+        // Получить все бронирования пользователя
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetUserBookings(Guid userId)
         {
@@ -36,14 +49,37 @@ namespace Bed4Head.Web.Controllers
             return Ok(bookings);
         }
 
+        // Получить одно бронирование
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(Guid id)
+        {
+            var booking = await _bookingService.GetByIdAsync(id);
+
+            if (booking == null)
+                return NotFound();
+
+            return Ok(booking);
+        }
+
+        // Отмена (меняем статус, а не удаляем)
         [HttpPatch("{id}/cancel")]
         public async Task<IActionResult> Cancel(Guid id)
         {
-            await _bookingService.DeleteAsync(id);
+            await _bookingService.CancelAsync(id);
             return Ok(new { message = "Booking cancelled successfully" });
         }
 
-        [HttpGet("all")]
+        // Изменение статуса (например админом)
+        [HttpPatch("{id}/status")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UpdateStatus(Guid id, [FromQuery] string status)
+        {
+            await _bookingService.UpdateStatusAsync(id, status);
+            return Ok(new { message = "Status updated successfully" });
+        }
+
+        // Все бронирования (админ)
+        [HttpGet]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> GetAll()
         {
@@ -52,5 +88,3 @@ namespace Bed4Head.Web.Controllers
         }
     }
 }
-
-
