@@ -57,12 +57,18 @@ namespace Bed4Head.Application.Services
             var user = await _db.Users.GetByIdAsync(dto.Id);
             if (user != null)
             {
+                if (!string.IsNullOrWhiteSpace(dto.Email))
+                {
+                    user.Email = dto.Email.Trim();
+                }
+
                 user.DisplayName = dto.DisplayName;
                 user.Phone = dto.Phone;
                 user.BirthDate = dto.BirthDate;
                 user.Country = dto.Country;
                 user.City = dto.City;
                 user.TravelPurpose = dto.TravelPurpose;
+                user.PreferredCurrencyCode = dto.PreferredCurrencyCode;
                 user.AvatarUrl = dto.AvatarUrl;
 
                 await _db.Users.UpdateAsync(user);

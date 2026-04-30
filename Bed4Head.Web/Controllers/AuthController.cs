@@ -1,5 +1,7 @@
 using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
+using MailKit.Net.Smtp;
+using MailKit.Security;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bed4Head.Web.Controllers
@@ -11,13 +13,11 @@ namespace Bed4Head.Web.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
-        private readonly IWebHostEnvironment _env;
 
-        public AuthController(IUserService userService, IAuthService authService, IWebHostEnvironment env)
+        public AuthController(IUserService userService, IAuthService authService)
         {
             _userService = userService;
             _authService = authService;
-            _env = env;
         }
 
         [HttpPost("register")]
@@ -26,19 +26,31 @@ namespace Bed4Head.Web.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _authService.RegisterAsync(dto);
+            UserDTO? result;
+
+            try
+            {
+                result = await _authService.RegisterAsync(dto);
+            }
+            catch (AuthenticationException)
+            {
+                return StatusCode(502, "Could not send verification email. SMTP authentication failed.");
+            }
+            catch (SmtpCommandException)
+            {
+                return StatusCode(502, "Could not send verification email. SMTP server rejected the message.");
+            }
+            catch (SmtpProtocolException)
+            {
+                return StatusCode(502, "Could not send verification email. SMTP connection failed.");
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("EmailSettings", StringComparison.OrdinalIgnoreCase))
+            {
+                return StatusCode(500, "Could not send verification email. Email settings are not configured.");
+            }
 
             if (result == null)
                 return BadRequest("User already exists or registration failed");
-
-            if (_env.IsDevelopment())
-            {
-                return Ok(new
-                {
-                    Message = "Registration successful. If email sending is disabled, check server logs (confirmation codes are not stored in DB).",
-                    User = result,
-                });
-            }
 
             return Ok(new
             {

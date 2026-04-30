@@ -23,6 +23,8 @@ namespace Bed4Head.Application.DTOs
         public string? RatingLabel { get; set; }
         public int ReviewsCount { get; set; }
         public bool IsFeatured { get; set; }
+        public List<string> Facilities { get; set; } = [];
+        public List<HotelFaqDTO> Faqs { get; set; } = [];
         public List<NearbyPlaceDTO> NearbyPlaces { get; set; } = [];
         public Guid? HotelChainId { get; set; }
     }

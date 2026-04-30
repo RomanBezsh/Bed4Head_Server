@@ -16,6 +16,11 @@ namespace Bed4Head.Application.Services
 
         public async Task SendVerificationCodeAsync(string toEmail, string code)
         {
+            if (string.Equals(_config["EmailSettings:DisableEmailSending"], "true", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(code))
             {
                 throw new ArgumentException("Verification code is required.", nameof(code));
@@ -23,7 +28,7 @@ namespace Bed4Head.Application.Services
 
             var senderEmail = _config["EmailSettings:SenderEmail"];
             var smtpServer = _config["EmailSettings:SmtpServer"];
-            var password = _config["EmailSettings:Password"];
+            var password = _config["EmailSettings:Password"]?.Replace(" ", string.Empty);
             var portValue = _config["EmailSettings:Port"];
 
             if (string.IsNullOrWhiteSpace(senderEmail) ||

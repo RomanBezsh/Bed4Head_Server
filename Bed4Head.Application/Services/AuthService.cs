@@ -38,8 +38,20 @@ namespace Bed4Head.Application.Services
         public async Task<UserDTO?> RegisterAsync(RegisterRequestDTO dto)
         {
             var allUsers = await _db.Users.GetAllAsync();
-            if (allUsers.Any(u => u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase)))
-                return null;
+            var existingUser = allUsers.FirstOrDefault(u => u.Email.Equals(dto.Email, StringComparison.OrdinalIgnoreCase));
+            if (existingUser != null)
+            {
+                if (existingUser.IsEmailConfirmed == true)
+                {
+                    return null;
+                }
+
+                var retryCode = GenerateVerificationCode();
+                SaveVerificationCode(existingUser.Email, retryCode);
+                await TrySendVerificationCodeAsync(existingUser.Email, retryCode);
+
+                return MapToDto(existingUser);
+            }
 
             var verificationCode = GenerateVerificationCode();
 
@@ -59,17 +71,22 @@ namespace Bed4Head.Application.Services
             await _db.CompleteAsync();
 
             SaveVerificationCode(user.Email, verificationCode);
+            await TrySendVerificationCodeAsync(user.Email, verificationCode);
+
+            return MapToDto(user);
+        }
+
+        private async Task TrySendVerificationCodeAsync(string email, string verificationCode)
+        {
             try
             {
-                await _emailService.SendVerificationCodeAsync(user.Email, verificationCode);
+                await _emailService.SendVerificationCodeAsync(email, verificationCode);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send verification code email for {Email}.", user.Email);
-                // In dev or with SMTP disabled, user can still confirm via code (e.g. debug endpoint or DB).
+                _logger.LogError(ex, "Failed to send verification code email for {Email}.", email);
+                throw;
             }
-
-            return MapToDto(user);
         }
 
         public async Task<bool> VerifyPasswordAsync(string email, string password)

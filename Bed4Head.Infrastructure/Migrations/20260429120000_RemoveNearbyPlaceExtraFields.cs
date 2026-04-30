@@ -15,14 +15,6 @@ namespace Bed4Head.Infrastructure.Migrations
                 table: "NearbyPlaces");
 
             migrationBuilder.DropColumn(
-                name: "Latitude",
-                table: "NearbyPlaces");
-
-            migrationBuilder.DropColumn(
-                name: "Longitude",
-                table: "NearbyPlaces");
-
-            migrationBuilder.DropColumn(
                 name: "WalkingMinutes",
                 table: "NearbyPlaces");
         }
@@ -35,20 +27,6 @@ namespace Bed4Head.Infrastructure.Migrations
                 table: "NearbyPlaces",
                 type: "text",
                 nullable: true);
-
-            migrationBuilder.AddColumn<double>(
-                name: "Latitude",
-                table: "NearbyPlaces",
-                type: "double precision",
-                nullable: false,
-                defaultValue: 0.0);
-
-            migrationBuilder.AddColumn<double>(
-                name: "Longitude",
-                table: "NearbyPlaces",
-                type: "double precision",
-                nullable: false,
-                defaultValue: 0.0);
 
             migrationBuilder.AddColumn<int>(
                 name: "WalkingMinutes",

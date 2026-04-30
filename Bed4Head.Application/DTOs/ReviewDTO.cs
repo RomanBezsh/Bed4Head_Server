@@ -19,5 +19,6 @@ namespace Bed4Head.Application.DTOs
         public Guid HotelId { get; set; }
         public Guid UserId { get; set; }
         public string? AuthorDisplayName { get; set; }
+        public string? AuthorAvatarUrl { get; set; }
     }
 }

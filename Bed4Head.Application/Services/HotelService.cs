@@ -23,7 +23,12 @@ namespace Bed4Head.Application.Services
         }
         public async Task<IEnumerable<HotelSummaryDTO>> GetAllSummariesAsync()
         {
-            var hotels = await _db.Hotels.GetAllAsync();
+            var hotels = await _context.Hotels
+                .AsNoTracking()
+                .Include(h => h.Photos)
+                .Include(h => h.Amenities)
+                .ToListAsync();
+
             return hotels.Select(h => new HotelSummaryDTO
             {
                 Id = h.Id,
@@ -38,7 +43,18 @@ namespace Bed4Head.Application.Services
                 RatingLabel = h.RatingLabel,
                 ReviewsCount = h.ReviewsCount,
                 IsFeatured = h.IsFeatured,
-                DistanceFromCenterKm = h.DistanceFromCenterKm
+                Latitude = h.Latitude,
+                Longitude = h.Longitude,
+                DistanceFromCenterKm = h.DistanceFromCenterKm,
+                Photos = h.Photos
+                    .OrderBy(p => p.DisplayOrder)
+                    .Select(p => p.Url)
+                    .Take(5)
+                    .ToList(),
+                Facilities = h.Amenities
+                    .OrderBy(a => a.DisplayOrder)
+                    .Select(a => a.Name)
+                    .ToList()
             });
         }
         
@@ -303,6 +319,8 @@ namespace Bed4Head.Application.Services
                 RatingLabel = h.RatingLabel,
                 ReviewsCount = h.ReviewsCount,
                 IsFeatured = h.IsFeatured,
+                Latitude = h.Latitude,
+                Longitude = h.Longitude,
                 DistanceFromCenterKm = h.DistanceFromCenterKm,
 
                 Photos = h.Photos
@@ -378,6 +396,8 @@ namespace Bed4Head.Application.Services
         public async Task UpdateAsync(HotelDetailsDTO dto)
         {
             var hotel = await _context.Hotels
+                .Include(h => h.Amenities)
+                .Include(h => h.Faqs)
                 .Include(h => h.NearbyPlaces)
                 .FirstOrDefaultAsync(h => h.Id == dto.Id);
 
@@ -403,6 +423,24 @@ namespace Bed4Head.Application.Services
             hotel.ReviewsCount = dto.ReviewsCount;
             hotel.IsFeatured = dto.IsFeatured;
             hotel.HotelChainId = dto.HotelChainId;
+
+            if (dto.Facilities.Count > 0)
+            {
+                hotel.Amenities = await ResolveAmenitiesAsync(dto.Facilities);
+            }
+
+            _context.HotelFaqs.RemoveRange(hotel.Faqs);
+            hotel.Faqs = dto.Faqs
+                .Where(f => !string.IsNullOrWhiteSpace(f.Question) && !string.IsNullOrWhiteSpace(f.Answer))
+                .Select((f, index) => new HotelFaq
+                {
+                    Id = Guid.NewGuid(),
+                    Question = f.Question.Trim(),
+                    Answer = f.Answer.Trim(),
+                    DisplayOrder = index,
+                    HotelId = hotel.Id
+                })
+                .ToList();
 
             // --- ❗ ВАЖНО: обновление NearbyPlaces ---
     
@@ -445,7 +483,9 @@ namespace Bed4Head.Application.Services
                           OverallRating = h.OverallRating,
                           RatingLabel = h.RatingLabel,
                           ReviewsCount = h.ReviewsCount,
-                          IsFeatured = h.IsFeatured
+                          IsFeatured = h.IsFeatured,
+                          Latitude = h.Latitude,
+                          Longitude = h.Longitude
                       });
         }
 

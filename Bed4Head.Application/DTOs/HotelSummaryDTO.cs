@@ -14,11 +14,14 @@ namespace Bed4Head.Application.DTOs
         public string? RatingLabel { get; set; }
         public int ReviewsCount { get; set; }
         public bool IsFeatured { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
 
         // 👇 ДОБАВЬ
         public double? DistanceFromCenterKm { get; set; }
 
         public List<string> Photos { get; set; } = [];
+        public List<string> Facilities { get; set; } = [];
     }
     
 }

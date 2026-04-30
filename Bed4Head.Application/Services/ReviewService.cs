@@ -212,7 +212,8 @@ namespace Bed4Head.Application.Services
             ValueForMoney = r.ValueForMoney,
             UserId = r.UserId,
             HotelId = r.HotelId,
-            AuthorDisplayName = r.User?.DisplayName
+            AuthorDisplayName = r.User?.DisplayName,
+            AuthorAvatarUrl = r.User?.AvatarUrl
         };
     }
 }
