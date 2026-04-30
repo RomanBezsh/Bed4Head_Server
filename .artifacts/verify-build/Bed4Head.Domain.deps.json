@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "Bed4Head.Domain/1.0.0": {
+        "runtime": {
+          "Bed4Head.Domain.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Bed4Head.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
