@@ -19,6 +19,14 @@ namespace Bed4Head.Application.Services
                           .Select(r => MapToDto(r));
         }
 
+        public async Task<IEnumerable<ReviewDTO>> GetByUserIdAsync(Guid userId)
+        {
+            var reviews = await _db.Reviews.GetAllAsync();
+            return reviews.Where(r => r.UserId == userId)
+                          .OrderByDescending(r => r.CreatedAt)
+                          .Select(r => MapToDto(r));
+        }
+
         public async Task<IEnumerable<ReviewDTO>> GetRandomAsync(int count)
         {
             var reviews = await _db.Reviews.GetAllAsync();

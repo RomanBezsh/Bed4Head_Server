@@ -384,10 +384,7 @@ public async Task<IActionResult> Create([FromForm] CreateRoomRequestDTO request)
             }
             else
             {
-                var middle = prices.Count / 2;
-                hotel.BasePricePerNight = prices.Count % 2 == 0
-                    ? (prices[middle - 1] + prices[middle]) / 2m
-                    : prices[middle];
+                hotel.BasePricePerNight = prices[prices.Count / 2];
             }
 
             await _context.SaveChangesAsync();

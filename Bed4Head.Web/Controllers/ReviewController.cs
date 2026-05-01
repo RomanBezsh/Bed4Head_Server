@@ -1,6 +1,9 @@
 using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace Bed4Head.Web.Controllers
 {
@@ -114,6 +117,20 @@ namespace Bed4Head.Web.Controllers
             return Ok(review);
         }
 
+        [HttpGet("reviews/me")]
+        [Authorize]
+        public async Task<IActionResult> GetMyReviews()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            var reviews = await _reviewService.GetByUserIdAsync(userId.Value);
+            return Ok(reviews);
+        }
+
         [HttpPut("reviews/{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] ReviewDTO dto)
         {
@@ -151,5 +168,14 @@ namespace Bed4Head.Web.Controllers
         }
 
         private static bool IsScoreValid(double score) => score >= 0 && score <= 10;
+
+        private Guid? GetCurrentUserId()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                         ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                         ?? User.FindFirstValue("sub");
+
+            return Guid.TryParse(userId, out var parsedUserId) ? parsedUserId : null;
+        }
     }
 }

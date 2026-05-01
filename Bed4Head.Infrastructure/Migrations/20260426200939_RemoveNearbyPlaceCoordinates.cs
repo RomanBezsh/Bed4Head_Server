@@ -10,13 +10,11 @@ namespace Bed4Head.Infrastructure.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Latitude",
-                table: "NearbyPlaces");
+            migrationBuilder.Sql(
+                """ALTER TABLE "NearbyPlaces" DROP COLUMN IF EXISTS "Latitude";""");
 
-            migrationBuilder.DropColumn(
-                name: "Longitude",
-                table: "NearbyPlaces");
+            migrationBuilder.Sql(
+                """ALTER TABLE "NearbyPlaces" DROP COLUMN IF EXISTS "Longitude";""");
         }
 
         /// <inheritdoc />

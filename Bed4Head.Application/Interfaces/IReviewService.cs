@@ -5,6 +5,7 @@ namespace Bed4Head.Application.Interfaces
     public interface IReviewService
     {
         Task<IEnumerable<ReviewDTO>> GetByHotelIdAsync(Guid hotelId);
+        Task<IEnumerable<ReviewDTO>> GetByUserIdAsync(Guid userId);
         Task<IEnumerable<ReviewDTO>> GetRandomAsync(int count);
         Task<IEnumerable<ReviewDTO>> GetRandomByHotelIdAsync(Guid hotelId, int count);
         Task<IEnumerable<ReviewDTO>> GetRandomFromRandomHotelAsync(int count);

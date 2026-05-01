@@ -1,5 +1,6 @@
 using Bed4Head.Application.DTOs;
 using Bed4Head.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bed4Head.Web.Controllers
@@ -36,9 +37,10 @@ namespace Bed4Head.Web.Controllers
         }
 
         [HttpPatch("{id}/preferences")]
-        public async Task<IActionResult> UpdatePreferences(Guid id, [FromQuery] bool seasonal, [FromQuery] bool favorite)
+        [Authorize]
+        public async Task<IActionResult> UpdatePreferences(Guid id, [FromQuery] bool seasonal, [FromQuery] bool favorite, [FromQuery] bool world, [FromQuery] bool affordable)
         {
-            await _userService.UpdateNewsPreferencesAsync(id, seasonal, favorite, true, true);
+            await _userService.UpdateNewsPreferencesAsync(id, seasonal, favorite, world, affordable);
             return Ok();
         }
 

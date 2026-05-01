@@ -23,7 +23,7 @@ public class BookingServiceTests
     {
         using var context = GetDbContext();
         var uow = new UnitOfWork(context);
-        var service = new BookingService(uow);
+        var service = new BookingService(uow, context);
 
         // Create related user and room
         var user = new Bed4Head.Domain.Entities.User { Id = Guid.NewGuid(), Email = "u@example.com", PasswordHash = "x", PasswordSalt = "" };
@@ -43,11 +43,12 @@ public class BookingServiceTests
             ChildrenCount = 0
         };
 
-        await service.CreateAsync(dto, user.Id);
+        var created = await service.CreateAsync(dto, user.Id);
 
         var bookings = (await uow.Bookings.GetAllAsync()).ToList();
         Assert.Single(bookings);
         Assert.Equal(user.Id, bookings[0].UserId);
+        Assert.Equal(bookings[0].Id, created.Id);
     }
 }
 
